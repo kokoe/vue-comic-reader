@@ -1,7 +1,11 @@
 <template>
   <section>
     <h2 class="title is-2">Standard</h2>
-    <VueComicReader />
+    <VueComicReader :pages="pages">
+      <template #last-page>
+        last page!!!
+      </template>
+    </VueComicReader>
   </section>
 </template>
 
@@ -13,6 +17,17 @@ export default Vue.extend({
   name: 'ExampleStandard',
   components: {
     VueComicReader
+  },
+  data () {
+    return {
+      pages: [
+        'https://placekitten.com/128/182',
+        'https://placekitten.com/128/182',
+        'https://placekitten.com/128/182',
+        'https://placekitten.com/128/182',
+        'https://placekitten.com/128/182'
+      ]
+    };
   }
 });
 </script>
