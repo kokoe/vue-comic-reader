@@ -19,7 +19,12 @@
       @reachEnd="onReachEnd"
     >
       <SwiperSlide v-for="(page, i) in formattedPages" :key="i" class="vcr__swiper-slide">
-        <div v-for="pageContent in page" :key="pageContent.pageNumber" class="vcr__swiper-slide-inner">
+        <div
+          v-for="pageContent in page"
+          :key="pageContent.pageNumber"
+          class="vcr__swiper-slide-inner"
+          :class="`is-horizontal-${pageContent.horizontalClickTo}`"
+        >
           <slot
             v-if="$slots['first-page'] && pageContent.slot === 'first-page'"
             name="first-page"
@@ -32,6 +37,7 @@
           >
             {{pageContent.horizontalClickTo}}
             <img :src="pageContent.src" alt="">
+            <a href="#" class="vcr__swiper-slide-nav"></a>
           </slot>
         </div>
       </SwiperSlide>
@@ -84,6 +90,10 @@ export default Vue.extend({
       type: Boolean,
       default: true
     },
+    firstUnspread: {
+      type: Boolean,
+      default: false
+    },
     // default vertical => rtl
     // reverse => ltr
     reverseHorizontal: {
@@ -116,56 +126,87 @@ export default Vue.extend({
     formattedPages (): Pages {
       return this.spread ? this.sreadPages : this.pageByPages;
     },
+
     sreadPages (): Pages {
       const pages: Pages = [[]];
-      let startIndex = 0;
+
+      let pageNumber = 0;
+
+      const isCreateNextPage: (n: number) => boolean = (pageIndex: number) => {
+        if (pageIndex === (this.pages.length - 1)) {
+          // last page
+          return false;
+        } else if (this.hasFirstSlot && !this.firstUnspread) {
+          // spread first slot
+          return !!(pageIndex % 2);
+        } else if (!this.hasFirstSlot && this.firstUnspread) {
+          // unspread without first slot
+          return !!(pageIndex % 2);
+        } else {
+          // others
+          return !(pageIndex % 2);
+        }
+      };
 
       if (this.$slots['first-page']) {
-        ++startIndex;
-        pages[0].push(this.getFirstPageFormat(startIndex));
-        pages.push([]);
+        pages[0].push(this.getFirstPageFormat(++pageNumber));
+        if (!this.firstUnspread) {
+          pages.push([]);
+        }
       }
 
       this.pages.forEach((page, i) => {
         pages[pages.length - 1].push({
-          pageNumber: i + startIndex + 1,
+          pageNumber: ++pageNumber,
           pagesIndex: i,
           src: page,
           horizontalClickTo: this.getHorizontalClickTo(i)
         });
-        if (i % 2) pages.push([]);
+        if (isCreateNextPage(i)) {
+          pages.push([]);
+        }
       });
+
       return pages;
     },
+
     pageByPages (): Pages {
       const pages: Pages = [[]];
-      let startIndex = 0;
+
+      let pageNumber = 0;
 
       if (this.$slots['first-page']) {
-        ++startIndex;
-        pages[0].push(this.getFirstPageFormat(startIndex));
+        pages[0].push(this.getFirstPageFormat(++pageNumber));
       }
 
       this.pages.forEach((page, i) => {
         pages.push([{
-          pageNumber: i + startIndex + 1,
+          pageNumber: ++pageNumber,
           pagesIndex: i,
           src: page,
           horizontalClickTo: 'next'
         }]);
       });
+
       return pages;
+    },
+
+    hasFirstSlot (): boolean {
+      return !!this.$slots['first-page'];
     },
 
     isHorizontal (): boolean {
       return this.direction === 'horizontal';
     },
+
     horizontalDirection (): 'rtl' | 'ltr' {
       return !this.isHorizontal || this.reverseHorizontal ? 'ltr' : 'rtl';
     },
+
     isFirstActiveIndex (): boolean {
       return this.activeIndex === 0;
     },
+
     swiperHorizontalOptions (): { [key: string]: unknown } {
       return {
         direction: this.direction,
@@ -175,6 +216,7 @@ export default Vue.extend({
         // slidesPerGroupSkip: 1
       };
     },
+
     swiperVerticalOptions (): { [key: string]: unknown } {
       return {
         direction: this.direction,
@@ -182,12 +224,15 @@ export default Vue.extend({
         freeMode: true
       };
     },
+
     swiperOptions (): { [key: string]: unknown } {
       return this.isHorizontal ? this.swiperHorizontalOptions : this.swiperVerticalOptions;
     },
+
     swiper (): any {
       return (this.$refs as any).swiper.$swiper;
     },
+
     totalPage (): number {
       let total = this.pages.length;
       if ((this.$slots as any)['first-page']) {
@@ -201,13 +246,14 @@ export default Vue.extend({
   },
 
   methods: {
+    // TODO 間違ってるので修正
     getHorizontalClickTo (pageIndex: number): 'prev' | 'next' {
       if (!this.spread) {
         return 'next';
       } else if (this.isHorizontal) {
         return (pageIndex % 2) ? 'next' : 'prev';
-      // } else {
-      //   return (pageIndex % 2) ? 'prev' : 'next';
+      } else {
+        return 'next';
       }
     },
     getInitialPage (): number {
@@ -300,36 +346,36 @@ export default Vue.extend({
 }
 
 .vcr__swiper-slide {
+  direction: ltr;
   display: inline-flex;
   justify-content: center;
   align-items: flex-start;
-  // &:first-child {
-  //   transition: transform 100ms;
-  //   text-align: center;
-  // }
-  // &:nth-child(2) {
-  //   transition: transform 10ms, opacity 10ms;
-  // }
-  // &:nth-child(2n) {
-  //   text-align: left;
-  // }
-  // &.swiper-slide-active:first-child {
-  //   transform: translateX(-50%);
-  //   // z-index: 2;
-  // }
-  // &.swiper-slide-next:nth-child(2) {
-  //   opacity: 0;
-  //   // transform: translateX(-55%);
-  //   // z-index: 1;
-  // }
 }
 
 .vcr__swiper-slide-inner {
+  position: relative;
   line-height: 1;
   > img {
     vertical-align: top;
     width: auto;
     height: 50vh;
+  }
+}
+
+.vcr__swiper-slide-nav {
+  display: block;
+  background: #fff000;
+  position: absolute;
+  z-index: 2;
+  .is-horizontal-next & {
+    top: 0;
+    bottom: 0;
+    right: 80%;
+  }
+  .is-horizontal-prev & {
+    top: 0;
+    bottom: 0;
+    left: 80%;
   }
 }
 </style>

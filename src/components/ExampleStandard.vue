@@ -1,7 +1,7 @@
 <template>
   <section>
     <h2 class="title is-2">Standard</h2>
-    <VueComicReader :pages="pages">
+    <VueComicReader :pages="pages" direction="horizontal">
       <template #first-page>
         first page!!!
       </template>
