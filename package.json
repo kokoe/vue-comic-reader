@@ -15,7 +15,8 @@
     "husky": "^6.0.0",
     "swiper": "^6.5.4",
     "vue": "^2.6.11",
-    "vue-awesome-swiper": "^4.1.1"
+    "vue-awesome-swiper": "^4.1.1",
+    "vue-slider-component": "^3.2.11"
   },
   "devDependencies": {
     "@types/jest": "^24.0.19",
