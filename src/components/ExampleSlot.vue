@@ -1,7 +1,11 @@
 <template>
   <section>
-    <h2 class="title is-2">Slot</h2>
-    <VueComicReader :pages="pages" height="50vh">
+    <h2 class="title is-2">Use Slot</h2>
+    <VueComicReader
+      title="Use Slot"
+      :pages="pages"
+      height="50vh"
+    >
       <template #first-page>
         first page!!!
       </template>

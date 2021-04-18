@@ -1,7 +1,12 @@
 <template>
   <section>
     <h2 class="title is-2">Disabled Spread</h2>
-    <VueComicReader :pages="pages" height="50vh" :spread="false" />
+    <VueComicReader
+      title="Disabled Spread"
+      :pages="pages"
+      height="50vh"
+      :spread="false"
+    />
   </section>
 </template>
 

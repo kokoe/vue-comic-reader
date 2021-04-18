@@ -1,7 +1,12 @@
 <template>
   <section>
     <h2 class="title is-2">Disabled Spread only First</h2>
-    <VueComicReader :pages="pages" height="50vh" first-unspread />
+    <VueComicReader
+      title="Disabled Spread only First"
+      :pages="pages"
+      height="50vh"
+      first-unspread
+    />
   </section>
 </template>
 

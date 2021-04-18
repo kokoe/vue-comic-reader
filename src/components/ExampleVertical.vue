@@ -1,7 +1,12 @@
 <template>
   <section>
     <h2 class="title is-2">Vertical</h2>
-    <VueComicReader :pages="pages" direction="vertical" height="60vh" />
+    <VueComicReader
+      title="Vertical"
+      :pages="pages"
+      initial-direction="vertical"
+      height="60vh"
+    />
   </section>
 </template>
 

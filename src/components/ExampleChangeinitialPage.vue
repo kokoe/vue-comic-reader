@@ -1,7 +1,12 @@
 <template>
   <section>
     <h2 class="title is-2">Change Start Page</h2>
-    <VueComicReader :pages="pages" height="50vh" :initial-page="4" />
+    <VueComicReader
+      title="Change Start Page"
+      :pages="pages"
+      height="50vh"
+      :initial-page="4"
+    />
   </section>
 </template>
 

@@ -1,7 +1,12 @@
 <template>
   <section>
     <h2 class="title is-2">Reverse horizontal</h2>
-    <VueComicReader :pages="pages" height="50vh" reverse-horizontal />
+    <VueComicReader
+      title="Reverse horizontal"
+      :pages="pages"
+      height="50vh"
+      reverse-horizontal
+    />
   </section>
 </template>
 

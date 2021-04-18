@@ -1,7 +1,11 @@
 <template>
   <section>
     <h2 class="title is-2">Standard</h2>
-    <VueComicReader :pages="pages" height="50vh" />
+    <VueComicReader
+      title="Standard"
+      :pages="pages"
+      height="50vh"
+    />
   </section>
 </template>
 
