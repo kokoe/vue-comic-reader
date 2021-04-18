@@ -1,7 +1,14 @@
 <template>
   <section>
-    <h2 class="title is-2">Standard</h2>
-    <VueComicReader :pages="pages" height="50vh" />
+    <h2 class="title is-2">Slot</h2>
+    <VueComicReader :pages="pages" height="50vh">
+      <template #first-page>
+        first page!!!
+      </template>
+      <template #last-page>
+        last page!!!
+      </template>
+    </VueComicReader>
   </section>
 </template>
 
@@ -10,7 +17,7 @@ import Vue from 'vue';
 import VueComicReader from './vue-comic-reader/index.vue';
 
 export default Vue.extend({
-  name: 'ExampleStandard',
+  name: 'ExampleSlot',
   components: {
     VueComicReader
   },
