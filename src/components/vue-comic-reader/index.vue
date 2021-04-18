@@ -6,11 +6,13 @@
   >
     <header v-if="isShowMenu" class="vcr__header">
       <slot name="header">
-        header
+        <slot name="header-brand"><div class="vcr__header-brand">{{ title }}</div></slot>
+        <button type="button" class="vcr__header-close" @click="isShowMenu = false">×</button>
       </slot>
     </header>
 
     <Swiper
+      :key="swiperKey_"
       :dir="horizontalDirection"
       class="vcr__swiper-container"
       ref="swiper"
@@ -62,7 +64,8 @@
 
     <footer v-if="isShowMenu" class="vcr__footer">
       <slot name="footer">
-        footer
+        <VueSlider class="vcr__footer-slider" :value="activePage" :max="totalPage" :min="1" :direction="reverseHorizontal ? 'ltr' : 'rtl'" @change="onChangeSlider" />
+        <button type="button" @click="changeDirection">⇔</button>
       </slot>
     </footer>
   </div>
@@ -71,6 +74,8 @@
 <script lang="ts">
 import Vue, { PropType } from 'vue';
 import { Swiper, SwiperSlide } from 'vue-awesome-swiper';
+import VueSlider from 'vue-slider-component';
+import { Value as VueSliderValue } from 'vue-slider-component/typings';
 
 interface IPageContent {
   pageNumber: number;
@@ -83,21 +88,30 @@ type Page = IPageContent[];
 
 type Pages = Page[];
 
+function genUniqKey (): number {
+  return Math.random() * 0x80000000 | 0;
+}
+
 export default Vue.extend({
   name: 'VueComicReader',
 
   components: {
     Swiper,
-    SwiperSlide
+    SwiperSlide,
+    VueSlider
   },
 
   props: {
+    title: {
+      type: String,
+      default: ''
+    },
     height: {
       type: [String, Number],
       default: '100vh',
       required: true
     },
-    direction: {
+    initialDirection: {
       type: String,
       default: 'horizontal' // horizontal | vertical
     },
@@ -128,9 +142,11 @@ export default Vue.extend({
 
   data () {
     return {
-      activeIndex: this.initialPage - 1,
+      direction: this.initialDirection,
+      activeSlideIndex: this.initialPage - 1,
       isShowMenu: false,
-      transitioning: false
+      transitioning: false,
+      swiperKey_: genUniqKey()
     };
   },
 
@@ -256,6 +272,15 @@ export default Vue.extend({
       return total;
     },
 
+    activePage (): number {
+      if (!this.spread) {
+        return this.activeSlideIndex + 1;
+      } else {
+        const page = this.formattedPages[this.activeSlideIndex];
+        return page && page[0] ? page[0].pageNumber : 1;
+      }
+    },
+
     wrapStyle (): { [key: string]: string | number } {
       return {
         height: this.height
@@ -280,6 +305,18 @@ export default Vue.extend({
       this.swiper.slideNext();
     },
 
+    pageTo (pageNumber: number, speed?: number): void {
+      this.slideTo(this.findSlideIndex(pageNumber), speed);
+    },
+
+    slideTo (slideIndex: number, speed?: number): void {
+      this.swiper.slideTo(slideIndex, speed, false);
+    },
+
+    resetSwiper (): void {
+      this.swiperKey_ = genUniqKey();
+    },
+
     getSlideInnerClass (pageContentIndex: number, pageContentLength: number): { [key: string]: boolean } {
       const isSpreadSlide = pageContentLength > 1;
       return {
@@ -289,7 +326,7 @@ export default Vue.extend({
       };
     },
 
-    getActiveIndex (pageNumber: number): number {
+    findSlideIndex (pageNumber: number): number {
       pageNumber = pageNumber < 1 ? 1 : pageNumber; // min validate
       pageNumber = pageNumber > this.totalPage ? this.totalPage : pageNumber; // max validate
 
@@ -313,12 +350,12 @@ export default Vue.extend({
     },
 
     onReady () {
-      this.activeIndex = this.getActiveIndex(this.initialPage);
-      this.swiper.slideTo(this.activeIndex, 0, false);
+      this.activeSlideIndex = this.findSlideIndex(this.initialPage);
+      this.slideTo(this.activeSlideIndex, 0);
     },
 
     onSlideChange (swiper: any): void {
-      this.activeIndex = swiper.activeIndex;
+      this.activeSlideIndex = swiper.activeIndex;
     },
 
     onChangeTransition (type: string): void {
@@ -332,6 +369,15 @@ export default Vue.extend({
       }
     },
 
+    onChangeSlider (pageNumber: VueSliderValue): void {
+      this.pageTo(pageNumber as number, 0);
+    },
+
+    changeDirection (): void {
+      this.direction = this.direction === 'horizontal' ? 'vertical' : 'horizontal';
+      this.resetSwiper();
+    },
+
     onContextmenu (e: Event): void {
       if (!Vue.config.devtools) {
         e.preventDefault();
@@ -342,13 +388,21 @@ export default Vue.extend({
 });
 </script>
 
+<style lang="scss">
+$themeColor: #35495E;
+@import '~vue-slider-component/lib/theme/default.scss';
+</style>
+
 <style lang="scss" scoped>
 @import '~swiper/swiper-bundle.css';
+
+$menuColor: #41B883;
 
 .vcr {
   position: relative;
   overflow: hidden;
   user-select: none;
+  -webkit-tap-highlight-color: transparent;
 }
 
 .vcr__header {
@@ -357,7 +411,25 @@ export default Vue.extend({
   top: 0;
   left: 0;
   right: 0;
-  background-color: #957A5D;
+  height: 56px;
+  background-color: $menuColor;
+  box-shadow: 0 4px 6px rgba(0,0,0,0.2);
+  color: #fff;
+  padding: 16px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.vcr__header-brand {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.vcr__header-close {
+  cursor: pointer;
 }
 
 .vcr__footer {
@@ -366,7 +438,19 @@ export default Vue.extend({
   bottom: 0;
   left: 0;
   right: 0;
-  background-color: #957A5D;
+  height: 56px;
+  background-color: $menuColor;
+  box-shadow: 0 -4px 6px rgba(0,0,0,0.2);
+  color: #fff;
+  padding: 16px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.vcr__footer-slider {
+  flex: 1;
+  margin: 0 24px 0 8px;
 }
 
 .vcr__overlay {
@@ -376,7 +460,7 @@ export default Vue.extend({
   left: 0;
   right: 0;
   bottom: 0;
-  background: rgba(0,0,0,0.5);
+  background: rgba(0,0,0,0.3);
 }
 
 .vcr__swiper-container {
@@ -416,11 +500,11 @@ export default Vue.extend({
 
 .vcr__swiper-slide-nav {
   display: block;
-  background: rgba(0,0,0,0.3);
   position: absolute;
   z-index: 3;
   color: transparent !important;
   font-size: 1px;
+  // background: rgba(0,0,0,0.3); // debug
 
   .is-horizontal & {
     top: 0;
