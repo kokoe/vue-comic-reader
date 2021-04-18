@@ -1,5 +1,9 @@
 <template>
-  <div class="vcr">
+  <div
+    class="vcr"
+    :style="wrapStyle"
+    @contextmenu="onContextmenu"
+  >
     <header v-if="isShowMenu" class="vcr__header">
       <slot name="header">
         header
@@ -11,23 +15,33 @@
       class="vcr__swiper-container"
       ref="swiper"
       :options="swiperOptions"
-      @click="isShowMenu = true"
+      @click="onClickSwiperContainer"
       @ready="onReady"
       @slideChange="onSlideChange"
-      @sliderMove="onSlideMove"
-      @fromEdge="onFromEdge"
-      @reachEnd="onReachEnd"
+      @slideChangeTransitionStart="onChangeTransition('start')"
+      @slideChangeTransitionEnd="onChangeTransition('end')"
     >
-      <SwiperSlide v-for="(page, i) in formattedPages" :key="i" class="vcr__swiper-slide">
+      <SwiperSlide
+        v-for="(page, i) in formattedPages"
+        :key="i"
+        class="vcr__swiper-slide"
+        :class="slideClass"
+        data-show-menu="true"
+      >
         <div
-          v-for="pageContent in page"
+          v-for="(pageContent, j) in page"
           :key="pageContent.pageNumber"
           class="vcr__swiper-slide-inner"
-          :class="`is-horizontal-${pageContent.horizontalClickTo}`"
+          :class="getSlideInnerClass(j, page.length)"
         >
           <slot
-            v-if="$slots['first-page'] && pageContent.slot === 'first-page'"
+            v-if="hasFirstSlot && pageContent.slot === 'first-page'"
             name="first-page"
+            :page-content="pageContent"
+          />
+          <slot
+            v-else-if="hasLastSlot && pageContent.slot === 'last-page'"
+            name="last-page"
             :page-content="pageContent"
           />
           <slot
@@ -35,17 +49,14 @@
             name="page"
             :page-content="pageContent"
           >
-            {{pageContent.horizontalClickTo}}
             <img :src="pageContent.src" alt="">
-            <a href="#" class="vcr__swiper-slide-nav"></a>
+            <a v-if="i !== 0" @click.prevent="toPrev" href="#" class="vcr__swiper-slide-nav is-prev" aria-label="Previous">Prev</a>
+            <a v-if="i < (formattedPages.length - 1)" @click.prevent="toNext" href="#" class="vcr__swiper-slide-nav is-next" aria-label="Next">Next</a>
+            <div class="vcr__swiper-slide-gurad-image" data-show-menu="true"></div>
           </slot>
         </div>
       </SwiperSlide>
     </Swiper>
-
-    <div v-if="isShowLast && $slots['last-page']" class="vcr__conversion">
-      <slot name="last-page" />
-    </div>
 
     <div v-if="isShowMenu" class="vcr__overlay" @click="isShowMenu = false"></div>
 
@@ -65,8 +76,7 @@ interface IPageContent {
   pageNumber: number;
   pagesIndex: number | null;
   src: string | null;
-  slot?: 'first-page';
-  horizontalClickTo: 'prev' | 'next';
+  slot?: 'first-page' | 'last-page';
 }
 
 type Page = IPageContent[];
@@ -82,6 +92,11 @@ export default Vue.extend({
   },
 
   props: {
+    height: {
+      type: [String, Number],
+      default: '100vh',
+      required: true
+    },
     direction: {
       type: String,
       default: 'horizontal' // horizontal | vertical
@@ -115,10 +130,7 @@ export default Vue.extend({
     return {
       activeIndex: this.initialPage - 1,
       isShowMenu: false,
-      isActiveLast: false, // TODO 実際判定が必要
-      isShowLast: false,
-      isShowLastMoveX: 150,
-      clientX_: 0
+      transitioning: false
     };
   },
 
@@ -135,7 +147,7 @@ export default Vue.extend({
       const isCreateNextPage: (n: number) => boolean = (pageIndex: number) => {
         if (pageIndex === (this.pages.length - 1)) {
           // last page
-          return false;
+          return !!this.hasLastSlot;
         } else if (this.hasFirstSlot && !this.firstUnspread) {
           // spread first slot
           return !!(pageIndex % 2);
@@ -148,8 +160,8 @@ export default Vue.extend({
         }
       };
 
-      if (this.$slots['first-page']) {
-        pages[0].push(this.getFirstPageFormat(++pageNumber));
+      if (this.hasFirstSlot) {
+        pages[0].push(this.getSlotPageFormat('first-page', ++pageNumber));
         if (!this.firstUnspread) {
           pages.push([]);
         }
@@ -159,40 +171,50 @@ export default Vue.extend({
         pages[pages.length - 1].push({
           pageNumber: ++pageNumber,
           pagesIndex: i,
-          src: page,
-          horizontalClickTo: this.getHorizontalClickTo(i)
+          src: page
         });
         if (isCreateNextPage(i)) {
           pages.push([]);
         }
       });
 
+      if (this.hasLastSlot) {
+        pages[pages.length - 1].push(this.getSlotPageFormat('last-page', ++pageNumber));
+      }
+
       return pages;
     },
 
     pageByPages (): Pages {
-      const pages: Pages = [[]];
+      const pages: Pages = [];
 
       let pageNumber = 0;
 
-      if (this.$slots['first-page']) {
-        pages[0].push(this.getFirstPageFormat(++pageNumber));
+      if (this.hasFirstSlot) {
+        pages.push([this.getSlotPageFormat('first-page', ++pageNumber)]);
       }
 
       this.pages.forEach((page, i) => {
         pages.push([{
           pageNumber: ++pageNumber,
           pagesIndex: i,
-          src: page,
-          horizontalClickTo: 'next'
+          src: page
         }]);
       });
+
+      if (this.hasLastSlot) {
+        pages.push([this.getSlotPageFormat('last-page', ++pageNumber)]);
+      }
 
       return pages;
     },
 
     hasFirstSlot (): boolean {
       return !!this.$slots['first-page'];
+    },
+
+    hasLastSlot (): boolean {
+      return !!this.$slots['last-page'];
     },
 
     isHorizontal (): boolean {
@@ -203,30 +225,22 @@ export default Vue.extend({
       return !this.isHorizontal || this.reverseHorizontal ? 'ltr' : 'rtl';
     },
 
-    isFirstActiveIndex (): boolean {
-      return this.activeIndex === 0;
+    swiperOptions (): { [key: string]: unknown } {
+      return this.isHorizontal ? this.swiperHorizontalOptions : this.swiperVerticalOptions;
     },
 
     swiperHorizontalOptions (): { [key: string]: unknown } {
       return {
         direction: this.direction,
         centeredSlides: false
-        // slidesPerView: 2,
-        // slidesPerGroup: 2,
-        // slidesPerGroupSkip: 1
       };
     },
 
     swiperVerticalOptions (): { [key: string]: unknown } {
       return {
         direction: this.direction,
-        slidesPerView: 1,
         freeMode: true
       };
-    },
-
-    swiperOptions (): { [key: string]: unknown } {
-      return this.isHorizontal ? this.swiperHorizontalOptions : this.swiperVerticalOptions;
     },
 
     swiper (): any {
@@ -235,66 +249,94 @@ export default Vue.extend({
 
     totalPage (): number {
       let total = this.pages.length;
-      if ((this.$slots as any)['first-page']) {
-        ++total;
-      }
-      if ((this.$slots as any)['last-page']) {
-        ++total;
-      }
+
+      total = this.hasFirstSlot ? ++total : total;
+      total = this.hasLastSlot ? ++total : total;
+
       return total;
+    },
+
+    wrapStyle (): { [key: string]: string | number } {
+      return {
+        height: this.height
+      };
+    },
+
+    slideClass (): { [key: string]: boolean } {
+      return {
+        'is-horizontal': this.isHorizontal,
+        'is-vertical': !this.isHorizontal,
+        'is-reverse-horizontal': this.reverseHorizontal
+      };
     }
   },
 
   methods: {
-    // TODO 間違ってるので修正
-    getHorizontalClickTo (pageIndex: number): 'prev' | 'next' {
+    toPrev (): void {
+      this.swiper.slidePrev();
+    },
+
+    toNext (): void {
+      this.swiper.slideNext();
+    },
+
+    getSlideInnerClass (pageContentIndex: number, pageContentLength: number): { [key: string]: boolean } {
+      const isSpreadSlide = pageContentLength > 1;
+      return {
+        'is-spread-odd': this.spread ? isSpreadSlide && !pageContentIndex : false,
+        'is-spread-even': this.spread ? isSpreadSlide && !!pageContentIndex : false,
+        'is-spread': isSpreadSlide
+      };
+    },
+
+    getActiveIndex (pageNumber: number): number {
+      pageNumber = pageNumber < 1 ? 1 : pageNumber; // min validate
+      pageNumber = pageNumber > this.totalPage ? this.totalPage : pageNumber; // max validate
+
       if (!this.spread) {
-        return 'next';
-      } else if (this.isHorizontal) {
-        return (pageIndex % 2) ? 'next' : 'prev';
+        return pageNumber - 1;
       } else {
-        return 'next';
+        const index = this.formattedPages.findIndex((pageContent) => {
+          return pageContent.find((page) => page.pageNumber === pageNumber);
+        });
+        return (index > -1) ? index : 0;
       }
     },
-    getInitialPage (): number {
-      if (this.initialPage > this.totalPage) {
-        return this.totalPage;
-      } else if (this.initialPage < 1) {
-        return 1;
-      } else {
-        return this.initialPage;
-      }
-    },
-    getFirstPageFormat (pageNumber: number): IPageContent {
+
+    getSlotPageFormat (slot: 'first-page' | 'last-page', pageNumber: number): IPageContent {
       return {
         pageNumber,
         pagesIndex: null,
         src: null,
-        slot: 'first-page',
-        horizontalClickTo: 'next'
+        slot
       };
     },
+
     onReady () {
-      this.activeIndex = this.getInitialPage() - 1;
+      this.activeIndex = this.getActiveIndex(this.initialPage);
       this.swiper.slideTo(this.activeIndex, 0, false);
     },
+
     onSlideChange (swiper: any): void {
       this.activeIndex = swiper.activeIndex;
     },
-    onSlideMove (swiper: any, event: PointerEvent): void {
-      if (!this.isActiveLast) return;
 
-      if (!this.clientX_) {
-        this.clientX_ = event.clientX;
-      } else if ((event.clientX - this.clientX_) > this.isShowLastMoveX) {
-        this.isShowLast = true;
+    onChangeTransition (type: string): void {
+      this.transitioning = type === 'start';
+    },
+
+    onClickSwiperContainer (swiper: any, e: Event): void {
+      const target = e.target as Element || null;
+      if (target && target.getAttribute('data-show-menu')) {
+        this.isShowMenu = true;
       }
     },
-    onFromEdge (): void {
-      this.isActiveLast = false;
-    },
-    onReachEnd (): void {
-      this.isActiveLast = true;
+
+    onContextmenu (e: Event): void {
+      if (!Vue.config.devtools) {
+        e.preventDefault();
+        this.isShowMenu = true;
+      }
     }
   }
 });
@@ -306,6 +348,7 @@ export default Vue.extend({
 .vcr {
   position: relative;
   overflow: hidden;
+  user-select: none;
 }
 
 .vcr__header {
@@ -316,6 +359,7 @@ export default Vue.extend({
   right: 0;
   background-color: #957A5D;
 }
+
 .vcr__footer {
   position: absolute;
   z-index: 12;
@@ -323,16 +367,6 @@ export default Vue.extend({
   left: 0;
   right: 0;
   background-color: #957A5D;
-}
-
-.vcr__conversion {
-  position: absolute;
-  z-index: 10;
-  top: 0;
-  left: 0;
-  right: 0;
-  bottom: 0;
-  background: rgba(255,255,255,0.8);
 }
 
 .vcr__overlay {
@@ -345,37 +379,125 @@ export default Vue.extend({
   background: rgba(0,0,0,0.5);
 }
 
+.vcr__swiper-container {
+  width: 100%;
+  height: 100%;
+}
+
 .vcr__swiper-slide {
-  direction: ltr;
-  display: inline-flex;
+  display: flex;
   justify-content: center;
-  align-items: flex-start;
+  align-items: stretch;
 }
 
 .vcr__swiper-slide-inner {
+  direction: ltr;
   position: relative;
   line-height: 1;
+  height: 100%;
+  width: auto;
+  flex: 0 0 auto;
+  max-width: 100%;
   > img {
     vertical-align: top;
     width: auto;
-    height: 50vh;
+    height: 100%;
   }
+}
+
+.vcr__swiper-slide-gurad-image {
+  position: absolute;
+  z-index: 2;
+  top: 0;
+  right: 0;
+  left: 0;
+  bottom: 0;
 }
 
 .vcr__swiper-slide-nav {
   display: block;
-  background: #fff000;
+  background: rgba(0,0,0,0.3);
   position: absolute;
-  z-index: 2;
-  .is-horizontal-next & {
+  z-index: 3;
+  color: transparent !important;
+  font-size: 1px;
+
+  .is-horizontal & {
     top: 0;
     bottom: 0;
-    right: 80%;
+    &.is-prev {
+      right: 0;
+      left: 70%;
+    }
+    &.is-next {
+      left: 0;
+      right: 70%;
+    }
   }
-  .is-horizontal-prev & {
-    top: 0;
-    bottom: 0;
-    left: 80%;
+
+  .is-horizontal .is-spread-odd & {
+    &.is-prev {
+      right: 0;
+      left: 50%;
+    }
+    &.is-next {
+      display: none;
+    }
   }
+
+  .is-horizontal .is-spread-even & {
+    &.is-prev {
+      display: none;
+    }
+    &.is-next {
+      left: 0;
+      right: 50%;
+    }
+  }
+
+  .is-reverse-horizontal:not(.is-vertical) & {
+    &.is-prev {
+      left: 0;
+      right: 70%;
+    }
+    &.is-next {
+      right: 0;
+      left: 70%;
+    }
+  }
+
+  .is-reverse-horizontal:not(.is-vertical) .is-spread-odd & {
+    &.is-prev {
+      left: 0;
+      right: 50%;
+    }
+    &.is-next {
+      display: none;
+    }
+  }
+
+  .is-reverse-horizontal:not(.is-vertical) .is-spread-even & {
+    &.is-prev {
+      display: none;
+    }
+    &.is-next {
+      right: 0;
+      left: 50%;
+    }
+  }
+
+  .is-vertical & {
+    left: 0;
+    right: 0;
+    &.is-prev {
+      top: 0;
+      bottom: 70%;
+    }
+    &.is-next {
+      bottom: 0;
+      top: 70%;
+    }
+  }
+
 }
 </style>
