@@ -4,12 +4,17 @@
     :style="wrapStyle"
     @contextmenu="onContextmenu"
   >
-    <header v-if="isShowMenu" class="vcr__header">
-      <slot name="header">
-        <slot name="header-brand"><div class="vcr__header-brand">{{ title }}</div></slot>
-        <button type="button" class="vcr__header-close" @click="isShowMenu = false">×</button>
-      </slot>
-    </header>
+    <transition
+      enter-active-class="animate__animated animate__slideInDown"
+      leave-active-class="animate__animated animate__slideOutUp"
+    >
+      <header v-if="isShowMenu" class="vcr__header">
+        <slot name="header">
+          <slot name="header-brand"><div class="vcr__header-brand">{{ title }}</div></slot>
+          <button type="button" class="vcr__header-close" @click="isShowMenu = false">×</button>
+        </slot>
+      </header>
+    </transition>
 
     <Swiper
       :key="swiperKey_"
@@ -60,14 +65,24 @@
       </SwiperSlide>
     </Swiper>
 
-    <div v-if="isShowMenu" class="vcr__overlay" @click="isShowMenu = false"></div>
+    <transition
+      enter-active-class="animate__animated animate__fadeIn"
+      leave-active-class="animate__animated animate__fadeOut"
+    >
+      <div v-if="isShowMenu" class="vcr__overlay" @click="isShowMenu = false"></div>
+    </transition>
 
-    <footer v-if="isShowMenu" class="vcr__footer">
-      <slot name="footer">
-        <VueSlider class="vcr__footer-slider" :value="activePage" :max="totalPage" :min="1" :direction="reverseHorizontal ? 'ltr' : 'rtl'" @change="onChangeSlider" />
-        <button type="button" @click="changeDirection">⇔</button>
-      </slot>
-    </footer>
+    <transition
+      enter-active-class="animate__animated animate__slideInUp"
+      leave-active-class="animate__animated animate__slideOutDown"
+    >
+      <footer v-if="isShowMenu" class="vcr__footer">
+        <slot name="footer">
+          <VueSlider class="vcr__footer-slider" :value="activePage" :max="totalPage" :min="1" :direction="reverseHorizontal ? 'ltr' : 'rtl'" @change="onChangeSlider" />
+          <button type="button" @click="changeDirection">⇔</button>
+        </slot>
+      </footer>
+    </transition>
   </div>
 </template>
 
@@ -396,7 +411,9 @@ $themeColor: #35495E;
 <style lang="scss" scoped>
 @import '~swiper/swiper-bundle.css';
 
-$menuColor: #41B883;
+$vcrMenuColor: #41B883;
+
+@import '@/assets/sass/animate';
 
 .vcr {
   position: relative;
@@ -412,7 +429,7 @@ $menuColor: #41B883;
   left: 0;
   right: 0;
   height: 56px;
-  background-color: $menuColor;
+  background-color: $vcrMenuColor;
   box-shadow: 0 4px 6px rgba(0,0,0,0.2);
   color: #fff;
   padding: 16px;
@@ -439,7 +456,7 @@ $menuColor: #41B883;
   left: 0;
   right: 0;
   height: 56px;
-  background-color: $menuColor;
+  background-color: $vcrMenuColor;
   box-shadow: 0 -4px 6px rgba(0,0,0,0.2);
   color: #fff;
   padding: 16px;
