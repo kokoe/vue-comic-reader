@@ -17,7 +17,7 @@
     </transition>
 
     <Swiper
-      :key="swiperKey_"
+      :auto-destroy="false"
       :dir="horizontalDirection"
       class="vcr__swiper-container"
       ref="swiper"
@@ -107,9 +107,9 @@ type Page = IPageContent[];
 
 type Pages = Page[];
 
-function genUniqKey (): number {
-  return Math.random() * 0x80000000 | 0;
-}
+// function genUniqKey (): number {
+//   return Math.random() * 0x80000000 | 0;
+// }
 
 export default Vue.extend({
   name: 'VueComicReader',
@@ -164,9 +164,12 @@ export default Vue.extend({
       direction: this.initialDirection,
       activeSlideIndex: this.initialPage - 1,
       isShowMenu: false,
-      transitioning: false,
-      swiperKey_: genUniqKey()
+      transitioning: false
     };
+  },
+
+  beforeDestroy () {
+    this.swiper.destroy(true, true);
   },
 
   computed: {
@@ -332,10 +335,6 @@ export default Vue.extend({
       this.swiper.slideTo(slideIndex, speed, false);
     },
 
-    resetSwiper (): void {
-      this.swiperKey_ = genUniqKey();
-    },
-
     getSlideInnerClass (pageContentIndex: number, pageContentLength: number): { [key: string]: boolean } {
       const isSpreadSlide = pageContentLength > 1;
       return {
@@ -394,7 +393,7 @@ export default Vue.extend({
 
     changeDirection (): void {
       this.direction = this.direction === 'horizontal' ? 'vertical' : 'horizontal';
-      this.resetSwiper();
+      this.pageTo(this.activePage);
     },
 
     onContextmenu (e: Event): void {
