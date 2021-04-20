@@ -56,10 +56,14 @@
             name="page"
             :page-content="pageContent"
           >
-            <img :src="pageContent.src" alt="">
+            <div
+              role="img"
+              :style="`background-image: url(${pageContent.src})`"
+              class="vcr__swiper-slide-image"
+              data-show-menu="true"
+            ></div>
             <a v-if="i !== 0" @click.prevent="toPrev" href="#" class="vcr__swiper-slide-nav is-prev" aria-label="Previous">Prev</a>
             <a v-if="i < (formattedPages.length - 1)" @click.prevent="toNext" href="#" class="vcr__swiper-slide-nav is-next" aria-label="Next">Next</a>
-            <div class="vcr__swiper-slide-gurad-image" data-show-menu="true"></div>
           </slot>
         </div>
       </SwiperSlide>
@@ -486,9 +490,13 @@ $vcrMenuColor: #41B883;
 }
 
 .vcr__swiper-slide {
+  overflow: hidden;
   display: flex;
   justify-content: center;
   align-items: stretch;
+  &.is-vertical:not(.is-reverse-horizontal) {
+    flex-direction: row-reverse;
+  }
 }
 
 .vcr__swiper-slide-inner {
@@ -496,23 +504,31 @@ $vcrMenuColor: #41B883;
   position: relative;
   line-height: 1;
   height: 100%;
-  width: auto;
-  flex: 0 0 auto;
-  max-width: 100%;
-  > img {
-    vertical-align: top;
-    width: auto;
-    height: 100%;
-  }
+  width: 100%;
+  flex: 0 1 auto;
 }
 
-.vcr__swiper-slide-gurad-image {
+.vcr__swiper-slide-image {
   position: absolute;
-  z-index: 2;
   top: 0;
   right: 0;
   left: 0;
   bottom: 0;
+  background-position: center top;
+  background-repeat: no-repeat;
+  background-size: contain;
+  .is-spread-odd & {
+    background-position: left top;
+  }
+  .is-spread-even & {
+    background-position: right top;
+  }
+  .is-reverse-horizontal .is-spread-odd & {
+    background-position: right top;
+  }
+  .is-reverse-horizontal .is-spread-even & {
+    background-position: left top;
+  }
 }
 
 .vcr__swiper-slide-nav {
