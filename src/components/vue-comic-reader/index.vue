@@ -277,7 +277,7 @@ export default Vue.extend({
         return this.activeSlideIndex + 1;
       } else {
         const page = this.formattedPages[this.activeSlideIndex];
-        return page && page[0] ? page[0].pageNumber : 1;
+        return page && page.length ? page[page.length - 1].pageNumber : 1;
       }
     },
 
