@@ -1,0 +1,40 @@
+<template>
+  <VueComicReader
+    :key="key_"
+    v-bind="$attrs"
+    v-on="$listeners"
+    :initial-direction="initialDirection"
+    :initial-page="initialPage"
+    @changeDirection="onChangeDirection"
+  />
+</template>
+
+<script lang="ts">
+import Vue from 'vue';
+import VueComicReader, { EmitChangeDirection } from './index.vue';
+
+function genUniqKey (): number {
+  return Math.random() * 0x80000000 | 0;
+}
+
+export default Vue.extend({
+  name: 'VueComicReaderManager',
+  components: {
+    VueComicReader
+  },
+  data () {
+    return {
+      key_: genUniqKey(),
+      initialDirection: this.$attrs['initial-direction'],
+      initialPage: Number.isNaN(Number(this.$attrs['initial-page'])) ? 1 : Number(this.$attrs['initial-page'])
+    };
+  },
+  methods: {
+    onChangeDirection (payload: EmitChangeDirection): void {
+      this.initialDirection = payload.direction;
+      this.initialPage = payload.activePage;
+      this.key_ = genUniqKey();
+    }
+  }
+});
+</script>

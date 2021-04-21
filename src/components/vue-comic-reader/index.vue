@@ -17,7 +17,6 @@
     </transition>
 
     <Swiper
-      :auto-destroy="false"
       :dir="horizontalDirection"
       class="vcr__swiper-container"
       ref="swiper"
@@ -96,20 +95,21 @@ import { Swiper, SwiperSlide } from 'vue-awesome-swiper';
 import VueSlider from 'vue-slider-component';
 import { Value as VueSliderValue } from 'vue-slider-component/typings';
 
-interface IPageContent {
+export type PageContent = {
   pageNumber: number;
   pagesIndex: number | null;
   src: string | null;
   slot?: 'first-page' | 'last-page';
 }
 
-type Page = IPageContent[];
+export type Page = PageContent[];
 
-type Pages = Page[];
+export type Pages = Page[];
 
-// function genUniqKey (): number {
-//   return Math.random() * 0x80000000 | 0;
-// }
+export type EmitChangeDirection = {
+  direction: 'horizontal' | 'vertical';
+  activePage: number
+}
 
 export default Vue.extend({
   name: 'VueComicReader',
@@ -127,8 +127,7 @@ export default Vue.extend({
     },
     height: {
       type: [String, Number],
-      default: '100vh',
-      required: true
+      default: '100vh'
     },
     initialDirection: {
       type: String,
@@ -166,10 +165,6 @@ export default Vue.extend({
       isShowMenu: false,
       transitioning: false
     };
-  },
-
-  beforeDestroy () {
-    this.swiper.destroy(true, true);
   },
 
   computed: {
@@ -281,7 +276,7 @@ export default Vue.extend({
       };
     },
 
-    swiper (): any {
+    swiperInstance (): any {
       return (this.$refs as any).swiper.$swiper;
     },
 
@@ -320,11 +315,11 @@ export default Vue.extend({
 
   methods: {
     toPrev (): void {
-      this.swiper.slidePrev();
+      this.swiperInstance.slidePrev();
     },
 
     toNext (): void {
-      this.swiper.slideNext();
+      this.swiperInstance.slideNext();
     },
 
     pageTo (pageNumber: number, speed?: number): void {
@@ -332,7 +327,7 @@ export default Vue.extend({
     },
 
     slideTo (slideIndex: number, speed?: number): void {
-      this.swiper.slideTo(slideIndex, speed, false);
+      this.swiperInstance.slideTo(slideIndex, speed, false);
     },
 
     getSlideInnerClass (pageContentIndex: number, pageContentLength: number): { [key: string]: boolean } {
@@ -358,7 +353,7 @@ export default Vue.extend({
       }
     },
 
-    getSlotPageFormat (slot: 'first-page' | 'last-page', pageNumber: number): IPageContent {
+    getSlotPageFormat (slot: 'first-page' | 'last-page', pageNumber: number): PageContent {
       return {
         pageNumber,
         pagesIndex: null,
@@ -369,7 +364,9 @@ export default Vue.extend({
 
     onReady () {
       this.activeSlideIndex = this.findSlideIndex(this.initialPage);
-      this.slideTo(this.activeSlideIndex, 0);
+      if (!this.swiperInstance.destroyed) {
+        this.slideTo(this.activeSlideIndex, 0);
+      }
     },
 
     onSlideChange (swiper: any): void {
@@ -392,8 +389,16 @@ export default Vue.extend({
     },
 
     changeDirection (): void {
-      this.direction = this.direction === 'horizontal' ? 'vertical' : 'horizontal';
-      this.pageTo(this.activePage);
+      const direction = this.direction === 'horizontal' ? 'vertical' : 'horizontal';
+      this.direction = direction;
+
+      const payload: EmitChangeDirection = {
+        direction,
+        activePage: this.activePage
+      };
+
+      this.$emit('changeDirection', payload);
+      this.destroy();
     },
 
     onContextmenu (e: Event): void {
@@ -401,7 +406,12 @@ export default Vue.extend({
         e.preventDefault();
         this.isShowMenu = true;
       }
+    },
+
+    destroy (): void {
+      this.swiperInstance.destroy(false, true);
     }
+
   }
 });
 </script>
