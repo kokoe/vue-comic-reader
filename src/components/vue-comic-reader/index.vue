@@ -57,10 +57,14 @@
           >
             <div
               role="img"
-              :style="`background-image: url(${pageContent.src})`"
+              :style="!lazy ? `background-image: url(${pageContent.src})`: false"
+              :data-background="lazy ? pageContent.src : false"
               class="vcr__swiper-slide-image"
+              :class="lazy ? 'swiper-lazy' : false"
               data-show-menu="true"
-            ></div>
+            >
+              <div v-if="lazy" class="swiper-lazy-preloader"></div>
+            </div>
             <a v-if="i !== 0" @click.prevent="toPrev" href="#" class="vcr__swiper-slide-nav is-prev" aria-label="Previous">Prev</a>
             <a v-if="i < (formattedPages.length - 1)" @click.prevent="toNext" href="#" class="vcr__swiper-slide-nav is-next" aria-label="Next">Next</a>
           </slot>
@@ -155,6 +159,10 @@ export default Vue.extend({
     initialPage: {
       type: Number,
       default: 1
+    },
+    lazy: {
+      type: Boolean,
+      default: true
     }
   },
 
@@ -265,6 +273,7 @@ export default Vue.extend({
     swiperHorizontalOptions (): { [key: string]: unknown } {
       return {
         direction: this.direction,
+        lazy: this.lazy ? { checkInView: false, loadOnTransitionStart: true, loadPrevNext: true } : false,
         centeredSlides: false
       };
     },
@@ -272,6 +281,7 @@ export default Vue.extend({
     swiperVerticalOptions (): { [key: string]: unknown } {
       return {
         direction: this.direction,
+        lazy: this.lazy ? { checkInView: true, loadOnTransitionStart: true, loadPrevNext: true } : false,
         freeMode: true
       };
     },
