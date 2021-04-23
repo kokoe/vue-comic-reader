@@ -16,61 +16,59 @@
       </header>
     </transition>
 
-    <Swiper
+    <div
+      ref="swiperContainer"
       :dir="horizontalDirection"
-      class="vcr__swiper-container"
-      ref="swiper"
-      :options="swiperOptions"
-      @click="onClickSwiperContainer"
-      @ready="onReady"
-      @slideChange="onSlideChange"
-      @slideChangeTransitionStart="onChangeTransition('start')"
-      @slideChangeTransitionEnd="onChangeTransition('end')"
+      class="swiper-container vcr__swiper-container"
     >
-      <SwiperSlide
-        v-for="(page, i) in formattedPages"
-        :key="i"
-        class="vcr__swiper-slide"
-        :class="slideClass"
-        data-show-menu="true"
-      >
+      <div class="swiper-wrapper">
         <div
-          v-for="(pageContent, j) in page"
-          :key="pageContent.pageNumber"
-          class="vcr__swiper-slide-inner"
-          :class="getSlideInnerClass(j, page.length)"
+          v-for="(page, i) in formattedPages"
+          :key="i"
+          class="swiper-slide vcr__swiper-slide"
+          :class="slideClass"
+          data-show-menu="true"
         >
-          <slot
-            v-if="hasFirstSlot && pageContent.slot === 'first-page'"
-            name="first-page"
-            :page-content="pageContent"
-          />
-          <slot
-            v-else-if="hasLastSlot && pageContent.slot === 'last-page'"
-            name="last-page"
-            :page-content="pageContent"
-          />
-          <slot
-            v-else
-            name="page"
-            :page-content="pageContent"
+          <div
+            v-for="(pageContent, j) in page"
+            :key="pageContent.pageNumber"
+            class="vcr__swiper-slide-inner"
+            :class="getSlideInnerClass(j, page.length)"
           >
-            <div
-              role="img"
-              :style="!lazy ? `background-image: url(${pageContent.src})`: false"
-              :data-background="lazy ? pageContent.src : false"
-              class="vcr__swiper-slide-image"
-              :class="lazy ? 'swiper-lazy' : false"
-              data-show-menu="true"
+            <slot
+              v-if="hasFirstSlot && pageContent.slot === 'first-page'"
+              name="first-page"
+              :page-content="pageContent"
+            />
+            <slot
+              v-else-if="hasLastSlot && pageContent.slot === 'last-page'"
+              name="last-page"
+              :page-content="pageContent"
+            />
+            <slot
+              v-else
+              name="page"
+              :page-content="pageContent"
             >
-              <div v-if="lazy" class="swiper-lazy-preloader"></div>
-            </div>
-            <a v-if="i !== 0" @click.prevent="toPrev" href="#" class="vcr__swiper-slide-nav is-prev" aria-label="Previous">Prev</a>
-            <a v-if="i < (formattedPages.length - 1)" @click.prevent="toNext" href="#" class="vcr__swiper-slide-nav is-next" aria-label="Next">Next</a>
-          </slot>
+              <div
+                role="img"
+                :style="!lazy ? `background-image: url(${pageContent.src})`: false"
+                :data-background="lazy ? pageContent.src : false"
+                class="vcr__swiper-slide-image"
+                :class="lazy ? 'swiper-lazy' : false"
+                data-show-menu="true"
+              >
+                <div v-if="lazy" class="swiper-lazy-preloader"></div>
+              </div>
+              <a v-if="i !== 0" @click.prevent="toPrev" href="#" class="vcr__swiper-slide-nav is-prev" aria-label="Previous">Prev</a>
+              <a v-if="i < (formattedPages.length - 1)" @click.prevent="toNext" href="#" class="vcr__swiper-slide-nav is-next" aria-label="Next">Next</a>
+            </slot>
+          </div>
         </div>
-      </SwiperSlide>
-    </Swiper>
+      </div>
+      <div class="swiper-button-prev"></div>
+      <div class="swiper-button-next"></div>
+    </div>
 
     <transition
       enter-active-class="animate__animated animate__fadeIn"
@@ -95,9 +93,15 @@
 
 <script lang="ts">
 import Vue, { PropType } from 'vue';
-import { Swiper, SwiperSlide } from 'vue-awesome-swiper';
+import Swiper, { Navigation, Lazy } from 'swiper';
 import VueSlider from 'vue-slider-component';
 import { Value as VueSliderValue } from 'vue-slider-component/typings';
+
+Swiper.use([Navigation, Lazy]);
+
+const isDev = Vue.config.devtools;
+
+export type Direction = 'horizontal' | 'vertical';
 
 export type PageContent = {
   pageNumber: number;
@@ -111,16 +115,22 @@ export type Page = PageContent[];
 export type Pages = Page[];
 
 export type EmitChangeDirection = {
-  direction: 'horizontal' | 'vertical';
+  direction: Direction;
   activePage: number
+}
+
+type DataType = {
+  swiper: Swiper | null;
+  direction: Direction;
+  activeSlideIndex: number;
+  isShowMenu: boolean;
+  transitioning: boolean;
 }
 
 export default Vue.extend({
   name: 'VueComicReader',
 
   components: {
-    Swiper,
-    SwiperSlide,
     VueSlider
   },
 
@@ -134,8 +144,11 @@ export default Vue.extend({
       default: '100vh'
     },
     initialDirection: {
-      type: String,
-      default: 'horizontal' // horizontal | vertical
+      type: String as PropType<Direction>,
+      default: 'horizontal',
+      validator (value): boolean {
+        return value === 'horizontal' || value === 'vertical';
+      }
     },
     spread: {
       type: Boolean,
@@ -162,17 +175,24 @@ export default Vue.extend({
     },
     lazy: {
       type: Boolean,
-      default: true
+      default: false
     }
   },
 
-  data () {
+  data (): DataType {
     return {
-      direction: this.initialDirection,
+      swiper: null,
+      direction: this.initialDirection as Direction,
       activeSlideIndex: this.initialPage - 1,
       isShowMenu: false,
       transitioning: false
     };
+  },
+
+  mounted () {
+    this.$nextTick(function () {
+      this.initSwiper();
+    });
   },
 
   computed: {
@@ -272,22 +292,22 @@ export default Vue.extend({
 
     swiperHorizontalOptions (): { [key: string]: unknown } {
       return {
+        preloadImages: !this.lazy,
+        watchSlidesVisibility: true,
         direction: this.direction,
-        lazy: this.lazy ? { checkInView: false, loadOnTransitionStart: true, loadPrevNext: true } : false,
+        lazy: this.lazy ? { checkInView: true, loadOnTransitionStart: true, loadPrevNext: true } : false,
         centeredSlides: false
       };
     },
 
     swiperVerticalOptions (): { [key: string]: unknown } {
       return {
+        preloadImages: !this.lazy,
+        watchSlidesVisibility: true,
         direction: this.direction,
         lazy: this.lazy ? { checkInView: true, loadOnTransitionStart: true, loadPrevNext: true } : false,
         freeMode: true
       };
-    },
-
-    swiperInstance (): any {
-      return (this.$refs as any).swiper.$swiper;
     },
 
     totalPage (): number {
@@ -325,11 +345,15 @@ export default Vue.extend({
 
   methods: {
     toPrev (): void {
-      this.swiperInstance.slidePrev();
+      if (this.swiper) {
+        this.swiper.slidePrev();
+      }
     },
 
     toNext (): void {
-      this.swiperInstance.slideNext();
+      if (this.swiper) {
+        this.swiper.slideNext();
+      }
     },
 
     pageTo (pageNumber: number, speed?: number): void {
@@ -337,7 +361,9 @@ export default Vue.extend({
     },
 
     slideTo (slideIndex: number, speed?: number): void {
-      this.swiperInstance.slideTo(slideIndex, speed, false);
+      if (this.swiper) {
+        this.swiper.slideTo(slideIndex, speed, false);
+      }
     },
 
     getSlideInnerClass (pageContentIndex: number, pageContentLength: number): { [key: string]: boolean } {
@@ -372,11 +398,22 @@ export default Vue.extend({
       };
     },
 
+    initSwiper () {
+      const container = this.$refs.swiperContainer as HTMLElement;
+      this.swiper = new Swiper(container, this.swiperOptions);
+      this.onReady();
+    },
+
     onReady () {
+      if (!this.swiper) return;
+
       this.activeSlideIndex = this.findSlideIndex(this.initialPage);
-      if (!this.swiperInstance.destroyed) {
-        this.slideTo(this.activeSlideIndex, 0);
-      }
+      this.slideTo(this.activeSlideIndex, 0);
+
+      this.swiper.on('click', this.onClickSwiperContainer);
+      this.swiper.on('slideChange', this.onSlideChange);
+      this.swiper.on('slideChangeTransitionStart', () => this.onChangeTransition('start'));
+      this.swiper.on('slideChangeTransitionEnd', () => this.onChangeTransition('end'));
     },
 
     onSlideChange (swiper: any): void {
@@ -412,14 +449,16 @@ export default Vue.extend({
     },
 
     onContextmenu (e: Event): void {
-      if (!Vue.config.devtools) {
+      if (!isDev) {
         e.preventDefault();
         this.isShowMenu = true;
       }
     },
 
     destroy (): void {
-      this.swiperInstance.destroy(false, true);
+      if (this.swiper) {
+        this.swiper.destroy(true, true);
+      }
     }
 
   }
