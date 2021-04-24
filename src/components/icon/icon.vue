@@ -26,13 +26,15 @@ import Vue from 'vue';
 import IconArrowLeftRight from './svg/icon-arrow-left-right.vue';
 import IconArrowUpDown from './svg/icon-arrow-up-down.vue';
 import IconClose from './svg/icon-close.vue';
+import IconCodeTags from './svg/icon-code-tags.vue';
 
 export default Vue.extend({
   name: 'Icon',
   components: {
     IconArrowLeftRight,
     IconArrowUpDown,
-    IconClose
+    IconClose,
+    IconCodeTags
   },
   props: {
     iconName: {

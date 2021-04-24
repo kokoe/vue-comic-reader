@@ -1,6 +1,9 @@
 <template>
   <section>
-    <h2 class="title is-2">Change Theme</h2>
+    <h2 class="title is-2">
+      Change Theme
+      <a class="pl-2" href="https://github.com/kokoe/vue-comic-reader/blob/main/src/components/ExampleChangeTheme.vue" target="_blank"><Icon icon-name="code-tags" /></a>
+    </h2>
     <VueComicReader class="vcr-custom-theme"
       title="Change Theme"
       :pages="pages"
@@ -14,11 +17,13 @@
 <script lang="ts">
 import Vue from 'vue';
 import VueComicReader from './vue-comic-reader/index.vue';
+import Icon from '@/components/icon/icon.vue';
 
 export default Vue.extend({
   name: 'ExampleChangeTheme',
   components: {
-    VueComicReader
+    VueComicReader,
+    Icon
   },
   data () {
     return {
