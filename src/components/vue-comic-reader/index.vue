@@ -11,7 +11,7 @@
       <header v-if="isShowMenu" class="vcr__header">
         <slot name="header">
           <slot name="header-brand"><div class="vcr__header-brand">{{ title }}</div></slot>
-          <button type="button" class="vcr__header-close" @click="isShowMenu = false">×</button>
+          <button type="button" class="vcr__header-close" @click="hideMenu">×</button>
         </slot>
       </header>
     </transition>
@@ -86,7 +86,7 @@
       enter-active-class="animate__animated animate__fadeIn"
       leave-active-class="animate__animated animate__fadeOut"
     >
-      <div v-if="isShowMenu" class="vcr__overlay" @click="isShowMenu = false"></div>
+      <div v-if="isShowMenu" class="vcr__overlay" @click="hideMenu"></div>
     </transition>
 
     <transition
@@ -377,6 +377,18 @@ export default Vue.extend({
       }
     },
 
+    toggleMenu (): void {
+      this.isShowMenu = !this.isShowMenu;
+    },
+
+    showMenu (): void {
+      this.isShowMenu = true;
+    },
+
+    hideMenu (): void {
+      this.isShowMenu = false;
+    },
+
     getSlideInnerClass (pageContentIndex: number, pageContentLength: number): { [key: string]: boolean } {
       const isSpreadSlide = pageContentLength > 1;
       return {
@@ -438,7 +450,7 @@ export default Vue.extend({
     onClickSwiperContainer (swiper: any, e: Event): void {
       const target = e.target as Element || null;
       if (target && target.getAttribute('data-show-menu')) {
-        this.isShowMenu = true;
+        this.showMenu();
       }
     },
 
@@ -462,7 +474,7 @@ export default Vue.extend({
     onContextmenu (e: Event): void {
       if (!isDev) {
         e.preventDefault();
-        this.isShowMenu = true;
+        this.showMenu();
       }
     },
 
