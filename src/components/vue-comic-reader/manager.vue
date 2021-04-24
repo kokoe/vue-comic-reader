@@ -7,7 +7,14 @@
     :initial-page="initialPage"
     :initial-notice-direction="noticeDirection"
     @changeDirection="onChangeDirection"
-  />
+  >
+    <template #header><slot name="header" /></template>
+    <template #header-brand><slot name="header-brand" /></template>
+    <template #footer><slot name="footer" /></template>
+    <template #page><slot name="page" /></template>
+    <template #first-page><slot name="first-page" /></template>
+    <template #last-page><slot name="last-page" /></template>
+  </VueComicReader>
 </template>
 
 <script lang="ts">

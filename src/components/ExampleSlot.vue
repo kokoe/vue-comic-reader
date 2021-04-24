@@ -6,6 +6,9 @@
       :pages="pages"
       height="50vh"
     >
+      <template #header-brand>
+        <h3>vue-comic-reader - Use slot</h3>
+      </template>
       <template #first-page>
         first page!!!
       </template>
