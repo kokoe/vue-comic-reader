@@ -33,25 +33,11 @@
         >
           <div
             v-for="(pageContent, j) in page"
-            :key="pageContent.pageNumber"
+            :key="pageContent.key"
             class="vcr__swiper-slide-inner"
             :class="getSlideInnerClass(j, page.length)"
           >
-            <slot
-              v-if="hasFirstSlot && pageContent.slot === 'first-page'"
-              name="first-page"
-              :page-content="pageContent"
-            />
-            <slot
-              v-else-if="hasLastSlot && pageContent.slot === 'last-page'"
-              name="last-page"
-              :page-content="pageContent"
-            />
-            <slot
-              v-else
-              name="page"
-              :page-content="pageContent"
-            >
+            <slot :name="getPageContentSlotName(pageContent.slot)">
               <div
                 role="img"
                 :style="!useLazy ? `background-image: url(${pageContent.src})`: false"
@@ -121,6 +107,7 @@ import Vue, { PropType } from 'vue';
 import Swiper, { Navigation, Lazy } from 'swiper';
 import { LazyOptions } from 'swiper/types/components/lazy';
 import VueSlider from 'vue-slider-component';
+import { genUniqKey } from '@/utility';
 import Icon from '@/components/icon/icon.vue';
 import { Value as VueSliderValue } from 'vue-slider-component/typings';
 
@@ -131,6 +118,7 @@ const isDev = Vue.config.devtools;
 export type Direction = 'horizontal' | 'vertical';
 
 export type PageContent = {
+  key: number;
   pageNumber: number;
   pagesIndex: number | null;
   src: string | null;
@@ -140,6 +128,20 @@ export type PageContent = {
 export type Page = PageContent[];
 
 export type Pages = Page[];
+
+export type PageSlotScope = {
+  slideIndex: number;
+  pageContent: PageContent;
+  type: 'odd' | 'even';
+  spread: boolean;
+  totalPage: number;
+}
+
+export type MenuSlotScope = {
+  direction: Direction;
+  activePage: number;
+  totalPage: number;
+}
 
 export type EmitChangeDirection = {
   direction: Direction;
@@ -290,6 +292,7 @@ export default Vue.extend({
 
       this.pages.forEach((page, i) => {
         pages[pages.length - 1].push({
+          key: genUniqKey(),
           pageNumber: ++pageNumber,
           pagesIndex: i,
           src: page
@@ -317,6 +320,7 @@ export default Vue.extend({
 
       this.pages.forEach((page, i) => {
         pages.push([{
+          key: genUniqKey(),
           pageNumber: ++pageNumber,
           pagesIndex: i,
           src: page
@@ -348,6 +352,14 @@ export default Vue.extend({
 
     useLazy (): boolean {
       return !!this.lazy;
+    },
+
+    menuSlotScope (): MenuSlotScope {
+      return {
+        direction: this.direction,
+        activePage: this.activePage,
+        totalPage: this.totalPage
+      };
     },
 
     swiperOptions (): { [key: string]: unknown } {
@@ -436,12 +448,38 @@ export default Vue.extend({
       this.isShowMenu = false;
     },
 
-    getSlideInnerClass (pageContentIndex: number, pageContentLength: number): { [key: string]: boolean } {
+    pageContentState (pageContentIndex: number, pageContentLength: number): { type: 'odd'|'even', spread: boolean } {
       const isSpreadSlide = pageContentLength > 1;
+      const isOdd = this.spread ? isSpreadSlide && !pageContentIndex : false;
       return {
-        'is-spread-odd': this.spread ? isSpreadSlide && !pageContentIndex : false,
-        'is-spread-even': this.spread ? isSpreadSlide && !!pageContentIndex : false,
-        'is-spread': isSpreadSlide
+        type: isOdd ? 'odd' : 'even',
+        spread: isSpreadSlide
+      };
+    },
+
+    createPageSlotScope (ctx: {
+      slideIndex: number;
+      pageContent: PageContent;
+      pageContentIndex: number;
+      pageContentLength: number
+    }): PageSlotScope {
+      const { slideIndex, pageContent, pageContentIndex, pageContentLength } = ctx;
+      const { type, spread } = this.pageContentState(pageContentIndex, pageContentLength);
+      return {
+        slideIndex,
+        pageContent,
+        type,
+        spread,
+        totalPage: this.totalPage
+      };
+    },
+
+    getSlideInnerClass (pageContentIndex: number, pageContentLength: number): { [key: string]: boolean } {
+      const { type, spread } = this.pageContentState(pageContentIndex, pageContentLength);
+      return {
+        'is-spread-odd': this.spread && spread && (type === 'odd'),
+        'is-spread-even': this.spread && spread && (type === 'even'),
+        'is-spread': spread
       };
     },
 
@@ -461,11 +499,22 @@ export default Vue.extend({
 
     getSlotPageFormat (slot: 'first-page' | 'last-page', pageNumber: number): PageContent {
       return {
+        key: genUniqKey(),
         pageNumber,
         pagesIndex: null,
         src: null,
         slot
       };
+    },
+
+    getPageContentSlotName (slot: string): 'first-page' | 'last-page' | 'page' {
+      if (this.hasFirstSlot && (slot === 'first-page')) {
+        return 'first-page';
+      } else if (this.hasLastSlot && (slot === 'last-page')) {
+        return 'last-page';
+      } else {
+        return 'page';
+      }
     },
 
     initSwiper () {

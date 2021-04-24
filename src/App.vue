@@ -3,7 +3,7 @@
     <div class="hero mb-4">
       <div class="hero-body has-text-centered">
         <h1 class="title is-1">vue-comic-reader</h1>
-        <p class="subtitle">Comic Reader Component For Vue.js</p>
+        <p class="subtitle">Comic Reader Component For Vue.js (v2)</p>
       </div>
     </div>
     <ExampleStandard class="container" />

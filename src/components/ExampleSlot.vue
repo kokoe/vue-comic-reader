@@ -10,7 +10,10 @@
         <h3>vue-comic-reader - Use slot</h3>
       </template>
       <template #first-page>
-        first page!!!
+        <div class="columns is-flex-direction-column is-justify-content-center is-align-items-center" style="height: 100%;">
+          <img src="https://placekitten.com/g/200/200" alt="" style="border-radius: 50%">
+          <p class="mt-4 is-size-5">First page!!!</p>
+        </div>
       </template>
       <template #last-page>
         last page!!!

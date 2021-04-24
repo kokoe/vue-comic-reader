@@ -19,11 +19,8 @@
 
 <script lang="ts">
 import Vue from 'vue';
+import { genUniqKey } from '@/utility';
 import VueComicReader, { EmitChangeDirection } from './index.vue';
-
-function genUniqKey (): number {
-  return Math.random() * 0x80000000 | 0;
-}
 
 export default Vue.extend({
   name: 'VueComicReaderManager',
