@@ -9,7 +9,7 @@
       leave-active-class="animate__animated animate__slideOutUp"
     >
       <header v-if="isShowMenu" class="vcr__header">
-        <slot name="header">
+        <slot name="header" v-bind="menuSlotScope">
           <slot name="header-brand"><div class="vcr__header-brand">{{ title }}</div></slot>
           <button type="button" class="vcr__icon-button" @click="hideMenu">
             <icon title="close" icon-name="close" class="vcr__icon-button-close" />
@@ -18,7 +18,9 @@
       </header>
     </transition>
 
+    <div v-if="domRefresh_"></div>
     <div
+      v-else
       ref="swiperContainer"
       :dir="horizontalDirection"
       class="swiper-container vcr__swiper-container"
@@ -37,7 +39,15 @@
             class="vcr__swiper-slide-inner"
             :class="getSlideInnerClass(j, page.length)"
           >
-            <slot :name="getPageContentSlotName(pageContent.slot)">
+            <slot
+              :name="getPageContentSlotName(pageContent.slot)"
+              v-bind="createPageSlotScope({
+                slideIndex: i,
+                pageContent,
+                pageContentIndex: j,
+                pageContentLength: page.length
+              })"
+            >
               <div
                 role="img"
                 :style="!useLazy ? `background-image: url(${pageContent.src})`: false"
@@ -82,7 +92,7 @@
       leave-active-class="animate__animated animate__slideOutDown"
     >
       <footer v-if="isShowMenu" class="vcr__footer">
-        <slot name="footer">
+        <slot name="footer" v-bind="menuSlotScope">
           <VueSlider class="vcr__footer-slider" :value="activePage" :max="totalPage" :min="1" :direction="reverseHorizontal ? 'ltr' : 'rtl'" @change="onChangeSlider" />
           <button type="button" class="vcr__icon-button" @click="changeDirection">
             <icon title="change direction" :icon-name="iconDirection" class="vcr__icon-button-direction" />
@@ -122,7 +132,7 @@ export type PageContent = {
   pageNumber: number;
   pagesIndex: number | null;
   src: string | null;
-  slot?: 'first-page' | 'last-page';
+  slot: 'first-page' | 'last-page' | 'page';
 }
 
 export type Page = PageContent[];
@@ -143,10 +153,10 @@ export type MenuSlotScope = {
   totalPage: number;
 }
 
-export type EmitChangeDirection = {
-  direction: Direction;
-  activePage: number
-}
+// export type EmitChangeDirection = {
+//   direction: Direction;
+//   activePage: number
+// }
 
 type DataType = {
   swiper: Swiper | null;
@@ -158,7 +168,9 @@ type DataType = {
     isShow: boolean;
     displayTime: number;
     timerId_: number;
-  }
+  },
+  domRefresh_: boolean;
+  initializedActiveSlideIndex_: boolean;
 }
 
 export default Vue.extend({
@@ -208,10 +220,6 @@ export default Vue.extend({
       type: Number,
       default: 1
     },
-    initialNoticeDirection: {
-      type: Boolean,
-      default: false
-    },
     lazy: {
       type: [Boolean, Object as ()=> LazyOptions],
       default: false
@@ -230,10 +238,12 @@ export default Vue.extend({
       isShowMenu: false,
       transitioning: false,
       noticeDirection: {
-        isShow: this.initialNoticeDirection,
+        isShow: false,
         displayTime: 3000,
         timerId_: -1
-      }
+      },
+      domRefresh_: false,
+      initializedActiveSlideIndex_: false
     };
   },
 
@@ -295,7 +305,8 @@ export default Vue.extend({
           key: genUniqKey(),
           pageNumber: ++pageNumber,
           pagesIndex: i,
-          src: page
+          src: page,
+          slot: 'page'
         });
         if (isCreateNextPage(i)) {
           pages.push([]);
@@ -323,7 +334,8 @@ export default Vue.extend({
           key: genUniqKey(),
           pageNumber: ++pageNumber,
           pagesIndex: i,
-          src: page
+          src: page,
+          slot: 'page'
         }]);
       });
 
@@ -526,7 +538,10 @@ export default Vue.extend({
     onReady () {
       if (!this.swiper) return;
 
-      this.activeSlideIndex = this.findSlideIndex(this.initialPage);
+      if (!this.initializedActiveSlideIndex_) {
+        this.activeSlideIndex = this.findSlideIndex(this.initialPage);
+        this.initializedActiveSlideIndex_ = true;
+      }
       this.slideTo(this.activeSlideIndex, 0);
 
       this.swiper.on('click', this.onClickSwiperContainer);
@@ -555,16 +570,12 @@ export default Vue.extend({
     },
 
     changeDirection (): void {
-      const direction = this.direction === 'horizontal' ? 'vertical' : 'horizontal';
-      this.direction = direction;
-
-      const payload: EmitChangeDirection = {
-        direction,
-        activePage: this.activePage
-      };
-
-      this.$emit('changeDirection', payload);
-      this.destroy();
+      this.direction = this.direction === 'horizontal' ? 'vertical' : 'horizontal';
+      this.refresh();
+      this.$nextTick(function () {
+        this.noticeDirection.isShow = true;
+        window.setTimeout(() => this.hideMenu(), 10);
+      });
     },
 
     onContextmenu (e: Event): void {
@@ -578,6 +589,15 @@ export default Vue.extend({
       if (this.swiper) {
         this.swiper.destroy(true, true);
       }
+    },
+
+    refresh (): void {
+      this.destroy();
+      this.domRefresh_ = true;
+      this.$nextTick(function () {
+        this.domRefresh_ = false;
+        window.setTimeout(() => this.initSwiper(), 0);
+      });
     }
 
   }

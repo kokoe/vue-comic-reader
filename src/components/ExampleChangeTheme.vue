@@ -13,7 +13,7 @@
 
 <script lang="ts">
 import Vue from 'vue';
-import VueComicReader from './vue-comic-reader/manager.vue';
+import VueComicReader from './vue-comic-reader/index.vue';
 
 export default Vue.extend({
   name: 'ExampleChangeTheme',
