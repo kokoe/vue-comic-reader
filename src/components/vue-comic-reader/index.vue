@@ -39,6 +39,7 @@
             class="vcr__swiper-slide-inner"
             :class="getSlideInnerClass(j, page.length)"
           >
+            <!-- TODO: Can't pass slot-slope -->
             <slot
               :name="getPageContentSlotName(pageContent.slot)"
               v-bind="createPageSlotScope({
