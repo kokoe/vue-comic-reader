@@ -5,6 +5,7 @@
     v-on="$listeners"
     :initial-direction="initialDirection"
     :initial-page="initialPage"
+    :initial-notice-direction="noticeDirection"
     @changeDirection="onChangeDirection"
   />
 </template>
@@ -22,11 +23,18 @@ export default Vue.extend({
   components: {
     VueComicReader
   },
+  props: {
+    initialNoticeDirection: {
+      type: Boolean,
+      default: false
+    }
+  },
   data () {
     return {
       key_: genUniqKey(),
       initialDirection: this.$attrs['initial-direction'],
-      initialPage: Number.isNaN(Number(this.$attrs['initial-page'])) ? 1 : Number(this.$attrs['initial-page'])
+      initialPage: Number.isNaN(Number(this.$attrs['initial-page'])) ? 1 : Number(this.$attrs['initial-page']),
+      noticeDirection: this.initialNoticeDirection
     };
   },
   methods: {
@@ -34,6 +42,7 @@ export default Vue.extend({
       this.initialDirection = payload.direction;
       this.initialPage = payload.activePage;
       this.key_ = genUniqKey();
+      this.noticeDirection = true;
     }
   }
 });

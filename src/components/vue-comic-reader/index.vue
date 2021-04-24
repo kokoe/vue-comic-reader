@@ -11,7 +11,9 @@
       <header v-if="isShowMenu" class="vcr__header">
         <slot name="header">
           <slot name="header-brand"><div class="vcr__header-brand">{{ title }}</div></slot>
-          <button type="button" class="vcr__header-close" @click="hideMenu">×</button>
+          <button type="button" class="vcr__icon-button" @click="hideMenu">
+            <icon title="close" icon-name="close" class="vcr__icon-button-close" />
+          </button>
         </slot>
       </header>
     </transition>
@@ -96,9 +98,20 @@
       <footer v-if="isShowMenu" class="vcr__footer">
         <slot name="footer">
           <VueSlider class="vcr__footer-slider" :value="activePage" :max="totalPage" :min="1" :direction="reverseHorizontal ? 'ltr' : 'rtl'" @change="onChangeSlider" />
-          <button type="button" @click="changeDirection">⇔</button>
+          <button type="button" class="vcr__icon-button" @click="changeDirection">
+            <icon title="change direction" :icon-name="iconDirection" class="vcr__icon-button-direction" />
+          </button>
         </slot>
       </footer>
+    </transition>
+
+    <transition
+      enter-active-class="animate__animated animate__fadeIn"
+      leave-active-class="animate__animated animate__fadeOut"
+    >
+      <div v-if="noticeDirection.isShow" class="vcr__changed-direction">
+        <icon title="changed direction" :icon-name="iconDirection" class="vcr__changed-direction-icon" />
+      </div>
     </transition>
   </div>
 </template>
@@ -108,6 +121,7 @@ import Vue, { PropType } from 'vue';
 import Swiper, { Navigation, Lazy } from 'swiper';
 import { LazyOptions } from 'swiper/types/components/lazy';
 import VueSlider from 'vue-slider-component';
+import Icon from '@/components/icon/icon.vue';
 import { Value as VueSliderValue } from 'vue-slider-component/typings';
 
 Swiper.use([Navigation, Lazy]);
@@ -138,12 +152,18 @@ type DataType = {
   activeSlideIndex: number;
   isShowMenu: boolean;
   transitioning: boolean;
+  noticeDirection: {
+    isShow: boolean;
+    displayTime: number;
+    timerId_: number;
+  }
 }
 
 export default Vue.extend({
   name: 'VueComicReader',
 
   components: {
+    Icon,
     VueSlider
   },
 
@@ -186,6 +206,10 @@ export default Vue.extend({
       type: Number,
       default: 1
     },
+    initialNoticeDirection: {
+      type: Boolean,
+      default: false
+    },
     lazy: {
       type: [Boolean, Object as ()=> LazyOptions],
       default: false
@@ -202,8 +226,27 @@ export default Vue.extend({
       direction: this.initialDirection as Direction,
       activeSlideIndex: this.initialPage - 1,
       isShowMenu: false,
-      transitioning: false
+      transitioning: false,
+      noticeDirection: {
+        isShow: this.initialNoticeDirection,
+        displayTime: 3000,
+        timerId_: -1
+      }
     };
+  },
+
+  watch: {
+    'noticeDirection.isShow': {
+      handler (isShow): void {
+        window.clearTimeout(this.noticeDirection.timerId_);
+        if (isShow) {
+          this.noticeDirection.timerId_ = window.setTimeout(() => {
+            this.noticeDirection.isShow = false;
+          }, this.noticeDirection.displayTime);
+        }
+      },
+      immediate: true
+    }
   },
 
   mounted () {
@@ -351,6 +394,10 @@ export default Vue.extend({
         'is-vertical': !this.isHorizontal,
         'is-reverse-horizontal': this.reverseHorizontal
       };
+    },
+
+    iconDirection (): string {
+      return this.isHorizontal ? 'arrow-left-right' : 'arrow-up-down';
     }
   },
 
@@ -545,8 +592,15 @@ $bgColor: var(--vcr-menu-slider-bg-color);
   white-space: nowrap;
 }
 
-.vcr__header-close {
+.vcr__icon-button {
   cursor: pointer;
+  color: inherit;
+  background: transparent;
+  padding: 0;
+  margin: 0;
+  border: none;
+  border-radius: 0;
+  line-height: 1;
 }
 
 .vcr__footer {
@@ -703,6 +757,24 @@ $bgColor: var(--vcr-menu-slider-bg-color);
       top: 70%;
     }
   }
+}
 
+.vcr__changed-direction {
+  pointer-events: none;
+  position: absolute;
+  z-index: 10;
+  top: 50%;
+  left: 50%;
+  height: 30%;
+  transform: translateX(-50%) translateY(-50%);
+  background-color: rgba(0,0,0,0.5);
+  border-radius: 10px;
+  color: #fff;
+}
+
+.vcr__changed-direction-icon {
+  width: auto;
+  height: calc(100% - 16px);
+  margin: 8px;
 }
 </style>
