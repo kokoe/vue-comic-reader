@@ -52,22 +52,34 @@
             >
               <div
                 role="img"
-                :style="!lazy ? `background-image: url(${pageContent.src})`: false"
-                :data-background="lazy ? pageContent.src : false"
+                :style="!useLazy ? `background-image: url(${pageContent.src})`: false"
+                :data-background="useLazy ? pageContent.src : false"
                 class="vcr__swiper-slide-image"
-                :class="lazy ? 'swiper-lazy' : false"
+                :class="useLazy ? 'swiper-lazy' : false"
                 data-show-menu="true"
               >
-                <div v-if="lazy" class="swiper-lazy-preloader"></div>
+                <div v-if="useLazy" class="swiper-lazy-preloader"></div>
               </div>
-              <a v-if="i !== 0" @click.prevent="toPrev" href="#" class="vcr__swiper-slide-nav is-prev" aria-label="Previous">Prev</a>
-              <a v-if="i < (formattedPages.length - 1)" @click.prevent="toNext" href="#" class="vcr__swiper-slide-nav is-next" aria-label="Next">Next</a>
+              <a
+                v-if="i !== 0"
+                @click.prevent="toPrev"
+                href="#"
+                class="vcr__swiper-slide-nav is-prev"
+                aria-label="Previous"
+              >Prev</a>
+              <a
+                v-if="i < (formattedPages.length - 1)"
+                @click.prevent="toNext"
+                href="#"
+                class="vcr__swiper-slide-nav is-next"
+                aria-label="Next"
+              >Next</a>
             </slot>
           </div>
         </div>
       </div>
-      <div class="swiper-button-prev"></div>
-      <div class="swiper-button-next"></div>
+      <div v-if="navigation" ref="swiperPrev" class="swiper-button-prev"></div>
+      <div v-if="navigation" ref="swiperNext" class="swiper-button-next"></div>
     </div>
 
     <transition
@@ -94,6 +106,7 @@
 <script lang="ts">
 import Vue, { PropType } from 'vue';
 import Swiper, { Navigation, Lazy } from 'swiper';
+import { LazyOptions } from 'swiper/types/components/lazy';
 import VueSlider from 'vue-slider-component';
 import { Value as VueSliderValue } from 'vue-slider-component/typings';
 
@@ -174,6 +187,10 @@ export default Vue.extend({
       default: 1
     },
     lazy: {
+      type: [Boolean, Object as ()=> LazyOptions],
+      default: false
+    },
+    navigation: {
       type: Boolean,
       default: false
     }
@@ -286,27 +303,21 @@ export default Vue.extend({
       return !this.isHorizontal || this.reverseHorizontal ? 'ltr' : 'rtl';
     },
 
+    useLazy (): boolean {
+      return !!this.lazy;
+    },
+
     swiperOptions (): { [key: string]: unknown } {
-      return this.isHorizontal ? this.swiperHorizontalOptions : this.swiperVerticalOptions;
-    },
-
-    swiperHorizontalOptions (): { [key: string]: unknown } {
       return {
         preloadImages: !this.lazy,
         watchSlidesVisibility: true,
         direction: this.direction,
-        lazy: this.lazy ? { checkInView: true, loadOnTransitionStart: true, loadPrevNext: true } : false,
-        centeredSlides: false
-      };
-    },
-
-    swiperVerticalOptions (): { [key: string]: unknown } {
-      return {
-        preloadImages: !this.lazy,
-        watchSlidesVisibility: true,
-        direction: this.direction,
-        lazy: this.lazy ? { checkInView: true, loadOnTransitionStart: true, loadPrevNext: true } : false,
-        freeMode: true
+        lazy: this.lazy,
+        navigation: this.navigation ? {
+          nextEl: this.$refs.swiperNext,
+          prevEl: this.$refs.swiperPrev
+        } : false,
+        freeMode: !this.isHorizontal
       };
     },
 
@@ -466,15 +477,26 @@ export default Vue.extend({
 </script>
 
 <style lang="scss">
-$themeColor: #35495E;
+.vcr {
+  --vcr-theme-primary-color: #41B883;
+  --vcr-theme-secondary-color: #35495E;
+  --vcr-theme-menu-font-color: #fff;
+  --vcr-menu-animation-duration: 0.2s;
+  --vcr-menu-slider-color: var(--vcr-theme-secondary-color);
+  --vcr-menu-slider-bg-color: #ccc;
+  --swiper-theme-color: var(--vcr-theme-primary-color);
+  --swiper-navigation-color: var(--vcr-theme-primary-color);
+  --swiper-preloader-color: var(--vcr-theme-primary-color);
+}
+
+$themeColor: var(--vcr-menu-slider-color);
+$bgColor: var(--vcr-menu-slider-bg-color);
+
 @import '~vue-slider-component/lib/theme/default.scss';
 </style>
 
 <style lang="scss" scoped>
 @import '~swiper/swiper-bundle.css';
-
-$vcrMenuColor: #41B883;
-
 @import '@/assets/sass/animate';
 
 .vcr {
@@ -484,17 +506,21 @@ $vcrMenuColor: #41B883;
   -webkit-tap-highlight-color: transparent;
 }
 
-.vcr__header {
+.vcr__header,
+.vcr__footer {
   position: absolute;
   z-index: 12;
-  top: 0;
   left: 0;
   right: 0;
-  height: 56px;
-  background-color: $vcrMenuColor;
-  box-shadow: 0 4px 6px rgba(0,0,0,0.2);
-  color: #fff;
+  background-color: var(--vcr-theme-primary-color);
+  color: var(--vcr-theme-menu-font-color);
   padding: 16px;
+  height: 56px;
+}
+
+.vcr__header {
+  top: 0;
+  box-shadow: 0 4px 6px rgba(0,0,0,0.2);
   display: flex;
   justify-content: space-between;
   align-items: center;
@@ -512,16 +538,8 @@ $vcrMenuColor: #41B883;
 }
 
 .vcr__footer {
-  position: absolute;
-  z-index: 12;
   bottom: 0;
-  left: 0;
-  right: 0;
-  height: 56px;
-  background-color: $vcrMenuColor;
   box-shadow: 0 -4px 6px rgba(0,0,0,0.2);
-  color: #fff;
-  padding: 16px;
   display: flex;
   justify-content: space-between;
   align-items: center;

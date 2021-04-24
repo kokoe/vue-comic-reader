@@ -5,10 +5,8 @@
  *
  * Copyright (c) 2021 Animate.css
  */
-$vcrAnimateDuration: 0.2s !default;
-
 .animate__animated {
-  animation-duration: $vcrAnimateDuration;
+  animation-duration: var(--vcr-menu-animation-duration, 0.2s);
   animation-fill-mode: both;
 }
 
