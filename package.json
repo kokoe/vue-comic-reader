@@ -1,7 +1,6 @@
 {
   "name": "vue-comic-reader",
   "version": "0.1.0",
-  "private": true,
   "description": "Comic reader component for vue.js",
   "author": "kokoe <kokoe@lettuce.sakura.ne.jp>",
   "scripts": {
