@@ -65,20 +65,20 @@
                 href="#"
                 class="vcr__swiper-slide-nav is-prev"
                 aria-label="Previous"
-              >Prev</a>
+              >{{ prevPageMessage }}</a>
               <a
                 v-if="i < (formattedPages.length - 1)"
                 @click.prevent="toNext"
                 href="#"
                 class="vcr__swiper-slide-nav is-next"
                 aria-label="Next"
-              >Next</a>
+              >{{ nextPageMessage }}</a>
             </slot>
           </div>
         </div>
       </div>
-      <div v-if="navigation" ref="swiperPrev" class="swiper-button-prev"></div>
-      <div v-if="navigation" ref="swiperNext" class="swiper-button-next"></div>
+      <div v-if="navigation" ref="swiperPrev" class="swiper-button-prev" :class="slideClass"></div>
+      <div v-if="navigation" ref="swiperNext" class="swiper-button-next" :class="slideClass"></div>
     </div>
 
     <transition
@@ -115,14 +115,14 @@
 
 <script lang="ts">
 import Vue, { PropType } from 'vue';
-import Swiper, { Navigation, Lazy, SwiperOptions } from 'swiper';
+import Swiper, { Navigation, Lazy, A11y, SwiperOptions } from 'swiper';
 import { LazyOptions } from 'swiper/types/components/lazy';
 import VueSlider from 'vue-slider-component';
 import { genUniqKey } from '@/utility';
 import Icon from '@/components/icon/icon.vue';
 import { Value as VueSliderValue } from 'vue-slider-component/typings';
 
-Swiper.use([Navigation, Lazy]);
+Swiper.use([Navigation, Lazy, A11y]);
 
 const isDev = Vue.config.devtools;
 
@@ -228,6 +228,14 @@ export default Vue.extend({
     navigation: {
       type: Boolean,
       default: false
+    },
+    prevPageMessage: {
+      type: String,
+      default: 'Previous page'
+    },
+    nextPageMessage: {
+      type: String,
+      default: 'Next page'
     }
   },
 
@@ -385,6 +393,10 @@ export default Vue.extend({
           nextEl: this.$refs.swiperNext as HTMLElement,
           prevEl: this.$refs.swiperPrev as HTMLElement
         } : false,
+        a11y: {
+          prevSlideMessage: this.prevPageMessage,
+          nextSlideMessage: this.nextPageMessage
+        },
         freeMode: !this.isHorizontal
       };
     },
@@ -627,6 +639,31 @@ $bgColor: var(--vcr-menu-slider-bg-color);
 <style lang="scss" scoped>
 @import '~swiper/swiper-bundle.css';
 @import '@/assets/sass/animate';
+
+.swiper-button-prev.swiper-button-disabled,
+.swiper-button-next.swiper-button-disabled {
+  opacity: 0;
+}
+
+.is-vertical {
+  &.swiper-button-prev {
+    margin-top: 0;
+    top: 5px;
+    left: 50%;
+    right: auto;
+    transform: rotateZ(90deg) translateX(-50%);
+    transform-origin: center left;
+  }
+  &.swiper-button-next {
+    margin-top: 0;
+    top: auto;
+    bottom: 5px;
+    left: 50%;
+    right: auto;
+    transform: rotateZ(90deg) translateX(-50%);
+    transform-origin: center left;
+  }
+}
 
 .vcr {
   position: relative;
