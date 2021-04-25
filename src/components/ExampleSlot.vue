@@ -67,6 +67,7 @@ export default Vue.extend({
   },
   methods: {
     onClickStart (): void {
+      // eslint-disable-next-line
       (this.$refs.vcr as any).toNext();
     }
   }

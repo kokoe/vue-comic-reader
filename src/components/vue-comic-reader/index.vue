@@ -115,7 +115,7 @@
 
 <script lang="ts">
 import Vue, { PropType } from 'vue';
-import Swiper, { Navigation, Lazy } from 'swiper';
+import Swiper, { Navigation, Lazy, SwiperOptions } from 'swiper';
 import { LazyOptions } from 'swiper/types/components/lazy';
 import VueSlider from 'vue-slider-component';
 import { genUniqKey } from '@/utility';
@@ -250,7 +250,7 @@ export default Vue.extend({
 
   watch: {
     'noticeDirection.isShow': {
-      handler (isShow): void {
+      handler (isShow: boolean): void {
         window.clearTimeout(this.noticeDirection.timerId_);
         if (isShow) {
           this.noticeDirection.timerId_ = window.setTimeout(() => {
@@ -375,15 +375,15 @@ export default Vue.extend({
       };
     },
 
-    swiperOptions (): { [key: string]: unknown } {
+    swiperOptions (): SwiperOptions {
       return {
         preloadImages: !this.lazy,
         watchSlidesVisibility: true,
         direction: this.direction,
         lazy: this.lazy,
         navigation: this.navigation ? {
-          nextEl: this.$refs.swiperNext,
-          prevEl: this.$refs.swiperPrev
+          nextEl: this.$refs.swiperNext as HTMLElement,
+          prevEl: this.$refs.swiperPrev as HTMLElement
         } : false,
         freeMode: !this.isHorizontal
       };
@@ -530,13 +530,13 @@ export default Vue.extend({
       }
     },
 
-    initSwiper () {
+    initSwiper (): void {
       const container = this.$refs.swiperContainer as HTMLElement;
       this.swiper = new Swiper(container, this.swiperOptions);
       this.onReady();
     },
 
-    onReady () {
+    onReady (): void {
       if (!this.swiper) return;
 
       if (!this.initializedActiveSlideIndex_) {
@@ -551,7 +551,7 @@ export default Vue.extend({
       this.swiper.on('slideChangeTransitionEnd', () => this.onChangeTransition('end'));
     },
 
-    onSlideChange (swiper: any): void {
+    onSlideChange (swiper: Swiper): void {
       this.activeSlideIndex = swiper.activeIndex;
     },
 
@@ -559,7 +559,7 @@ export default Vue.extend({
       this.transitioning = type === 'start';
     },
 
-    onClickSwiperContainer (swiper: any, e: Event): void {
+    onClickSwiperContainer (swiper: Swiper, e: Event): void {
       const target = e.target as Element || null;
       if (target && target.getAttribute('data-show-menu')) {
         this.showMenu();
