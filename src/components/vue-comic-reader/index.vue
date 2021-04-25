@@ -77,8 +77,8 @@
         </div>
 
       </div>
-      <div v-if="navigation" ref="swiperPrev" class="swiper-button-prev" :class="slideClass"></div>
-      <div v-if="navigation" ref="swiperNext" class="swiper-button-next" :class="slideClass"></div>
+      <div v-if="navigation" class="swiper-button-prev" :class="slideClass"></div>
+      <div v-if="navigation" class="swiper-button-next" :class="slideClass"></div>
     </div>
 
     <transition
@@ -165,15 +165,17 @@ type DataType = {
   activeSlideIndex: number;
   isShowMenu: boolean;
   transitioning: boolean;
+  hasFirstSlot: boolean;
+  hasLastSlot: boolean;
   noticeDirection: {
     isShow: boolean;
     displayTime: number;
     timerId_: number;
   },
+  mq: MediaQueryList | null;
+  spread_: boolean;
   domRefresh_: boolean;
   initializedActiveSlideIndex_: boolean;
-  hasFirstSlot: boolean;
-  hasLastSlot: boolean;
 }
 
 export default Vue.extend({
@@ -218,6 +220,10 @@ export default Vue.extend({
       type: Array as PropType<string[]>,
       required: true
     },
+    smallViewBreakPoint: {
+      type: Number,
+      default: 768
+    },
     // Not index
     initialPage: {
       type: Number,
@@ -248,19 +254,24 @@ export default Vue.extend({
       activeSlideIndex: this.initialPage - 1,
       isShowMenu: false,
       transitioning: false,
+      hasFirstSlot: false,
+      hasLastSlot: false,
       noticeDirection: {
         isShow: false,
         displayTime: 3000,
         timerId_: -1
       },
+      mq: null,
+      spread_: this.spread,
       domRefresh_: false,
-      initializedActiveSlideIndex_: false,
-      hasFirstSlot: false,
-      hasLastSlot: false
+      initializedActiveSlideIndex_: false
     };
   },
 
   watch: {
+    spread (spread: boolean): void {
+      this.spread_ = spread;
+    },
     'noticeDirection.isShow': {
       handler (isShow: boolean): void {
         window.clearTimeout(this.noticeDirection.timerId_);
@@ -288,6 +299,10 @@ export default Vue.extend({
       this.hasFirstSlot = !!this.$slots['first-page'];
       this.hasLastSlot = !!this.$slots['last-page'];
       setTimeout(() => this.initSwiper(), 0);
+
+      this.mq = window.matchMedia(`(max-width: ${this.smallViewBreakPoint}px)`);
+      this.mq.addListener(this.onChangeMQ);
+      this.onChangeMQ(this.mq);
     });
   },
 
@@ -301,7 +316,7 @@ export default Vue.extend({
 
   computed: {
     formattedPages (): Pages {
-      return this.spread ? this.sreadPages : this.pageByPages;
+      return this.spread_ ? this.sreadPages : this.pageByPages;
     },
 
     sreadPages (): Pages {
@@ -400,13 +415,14 @@ export default Vue.extend({
 
     swiperOptions (): SwiperOptions {
       return {
+        initialSlide: this.activeSlideIndex,
         preloadImages: !this.lazy,
         watchSlidesVisibility: true,
         direction: this.direction,
         lazy: this.lazy,
         navigation: this.navigation ? {
-          nextEl: this.$refs.swiperNext as HTMLElement,
-          prevEl: this.$refs.swiperPrev as HTMLElement
+          nextEl: '.swiper-button-next',
+          prevEl: '.swiper-button-prev'
         } : false,
         a11y: {
           prevSlideMessage: this.prevPageMessage,
@@ -426,7 +442,7 @@ export default Vue.extend({
     },
 
     activePage (): number {
-      if (!this.spread) {
+      if (!this.spread_) {
         return this.activeSlideIndex + 1;
       } else {
         const page = this.formattedPages[this.activeSlideIndex];
@@ -490,7 +506,7 @@ export default Vue.extend({
 
     pageContentState (pageContentIndex: number, pageContentLength: number): { type: 'odd'|'even', spread: boolean } {
       const isSpreadSlide = pageContentLength > 1;
-      const isOdd = this.spread ? isSpreadSlide && !pageContentIndex : false;
+      const isOdd = this.spread_ ? isSpreadSlide && !pageContentIndex : false;
       return {
         type: isOdd ? 'odd' : 'even',
         spread: isSpreadSlide
@@ -517,8 +533,8 @@ export default Vue.extend({
     getSlideInnerClass (pageContentIndex: number, pageContentLength: number): { [key: string]: boolean } {
       const { type, spread } = this.pageContentState(pageContentIndex, pageContentLength);
       return {
-        'is-spread-odd': this.spread && spread && (type === 'odd'),
-        'is-spread-even': this.spread && spread && (type === 'even'),
+        'is-spread-odd': this.spread_ && spread && (type === 'odd'),
+        'is-spread-even': this.spread_ && spread && (type === 'even'),
         'is-spread': spread
       };
     },
@@ -527,7 +543,7 @@ export default Vue.extend({
       pageNumber = pageNumber < 1 ? 1 : pageNumber; // min validate
       pageNumber = pageNumber > this.totalPage ? this.totalPage : pageNumber; // max validate
 
-      if (!this.spread) {
+      if (!this.spread_) {
         return pageNumber - 1;
       } else {
         const index = this.formattedPages.findIndex((pageContent) => {
@@ -556,16 +572,23 @@ export default Vue.extend({
     onReady (): void {
       if (!this.swiper) return;
 
-      if (!this.initializedActiveSlideIndex_) {
-        this.activeSlideIndex = this.findSlideIndex(this.initialPage);
-        this.initializedActiveSlideIndex_ = true;
-      }
-      this.slideTo(this.activeSlideIndex, 0);
+      const activePage = this.initializedActiveSlideIndex_ ? this.activePage : this.initialPage;
+
+      this.activeSlideIndex = this.findSlideIndex(activePage);
+      this.initializedActiveSlideIndex_ = true;
 
       this.swiper.on('click', this.onClickSwiperContainer);
       this.swiper.on('slideChange', this.onSlideChange);
       this.swiper.on('slideChangeTransitionStart', () => this.onChangeTransition('start'));
       this.swiper.on('slideChangeTransitionEnd', () => this.onChangeTransition('end'));
+    },
+
+    onChangeMQ (mq: MediaQueryList | MediaQueryListEvent): void {
+      if (mq.matches) {
+        this.changeSmallView();
+      } else {
+        this.changeLargeView();
+      }
     },
 
     onClickClose (): void {
@@ -602,6 +625,19 @@ export default Vue.extend({
       });
     },
 
+    changeSmallView (): void {
+      this.spread_ = false;
+      this.refresh();
+      this.$emit('change:view', 'small');
+    },
+
+    changeLargeView (): void {
+      if (this.spread_ === this.spread) return;
+      this.spread_ = this.spread;
+      this.refresh();
+      this.$emit('change:view', 'large');
+    },
+
     onContextmenu (e: Event): void {
       if (!isDev) {
         e.preventDefault();
@@ -620,7 +656,7 @@ export default Vue.extend({
       this.domRefresh_ = true;
       this.$nextTick(function () {
         this.domRefresh_ = false;
-        window.setTimeout(() => this.initSwiper(), 0);
+        window.setTimeout(() => this.initSwiper(), 1);
       });
     }
 
