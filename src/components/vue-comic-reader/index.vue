@@ -11,8 +11,8 @@
       <header v-if="isShowMenu" class="vcr-header">
         <slot name="header" v-bind="menuSlotScope">
           <slot name="header-brand"><div class="vcr-header__brand">{{ title }}</div></slot>
-          <button type="button" class="vcr-icon-button" @click="hideMenu">
-            <icon title="close" icon-name="close" class="vcr-icon-button__icon-close" />
+          <button type="button" class="vcr-icon-button" @click="onClickClose">
+            <icon title="close" icon-name="close" class="vcr-icon-button__icon vcr-icon-button__icon-close" />
           </button>
         </slot>
       </header>
@@ -96,7 +96,7 @@
         <slot name="footer" v-bind="menuSlotScope">
           <VueSlider class="vcr-footer__slider" :value="activePage" :max="totalPage" :min="1" :direction="reverseHorizontal ? 'ltr' : 'rtl'" @change="onChangeSlider" />
           <button type="button" class="vcr-icon-button" @click="changeDirection">
-            <icon title="change direction" :icon-name="iconDirection" class="vcr-icon-button__icon-direction" />
+            <icon title="change direction" :icon-name="iconDirection" class="vcr-icon-button__icon vcr-icon-button__icon-direction" />
           </button>
         </slot>
       </footer>
@@ -154,10 +154,10 @@ export type MenuSlotScope = {
   totalPage: number;
 }
 
-// export type EmitChangeDirection = {
-//   direction: Direction;
-//   activePage: number
-// }
+export type EmitChangeActivePage = {
+  activePage: number;
+  isLastPage: boolean;
+}
 
 type DataType = {
   swiper: Swiper | null;
@@ -267,6 +267,15 @@ export default Vue.extend({
         }
       },
       immediate: true
+    },
+    activePage (activePage: number): void {
+      this.$emit('change:page', {
+        activePage,
+        isLastPage: activePage === this.totalPage
+      } as EmitChangeActivePage);
+    },
+    isShowMenu (isShow: boolean): void {
+      this.$emit('change:menu', isShow);
     }
   },
 
@@ -274,6 +283,14 @@ export default Vue.extend({
     this.$nextTick(function () {
       this.initSwiper();
     });
+  },
+
+  beforeDestroy () {
+    this.$emit('beforeDestroy');
+  },
+
+  destroyed () {
+    this.$emit('destroyed');
   },
 
   computed: {
@@ -563,6 +580,11 @@ export default Vue.extend({
       this.swiper.on('slideChangeTransitionEnd', () => this.onChangeTransition('end'));
     },
 
+    onClickClose (): void {
+      this.hideMenu();
+      this.$emit('click:close');
+    },
+
     onSlideChange (swiper: Swiper): void {
       this.activeSlideIndex = swiper.activeIndex;
     },
@@ -586,6 +608,7 @@ export default Vue.extend({
       this.direction = this.direction === 'horizontal' ? 'vertical' : 'horizontal';
       this.refresh();
       this.$nextTick(function () {
+        this.$emit('change:direction', this.direction);
         this.noticeDirection.isShow = true;
         window.setTimeout(() => this.hideMenu(), 10);
       });
@@ -623,8 +646,15 @@ export default Vue.extend({
   --vcr-theme-secondary-color: #35495E;
   --vcr-theme-menu-font-color: #fff;
   --vcr-menu-animation-duration: 0.2s;
+  --vcr-menu-padding: 16px;
+  --vcr-menu-height: 56px;
+  --vcr-menu-icon-width: 24px;
+  --vcr-menu-icon-height: 24px;
+  --vcr-menu-header-shadow: 0 4px 6px rgba(0,0,0,0.2);
+  --vcr-menu-footer-shadow: 0 -4px 6px rgba(0,0,0,0.2);
   --vcr-menu-slider-color: var(--vcr-theme-secondary-color);
   --vcr-menu-slider-bg-color: #ccc;
+  --vcr-overlay-color:rgba(0,0,0,0.3);
   --swiper-theme-color: var(--vcr-theme-primary-color);
   --swiper-navigation-color: var(--vcr-theme-primary-color);
   --swiper-preloader-color: var(--vcr-theme-primary-color);
@@ -680,13 +710,13 @@ $bgColor: var(--vcr-menu-slider-bg-color);
   right: 0;
   background-color: var(--vcr-theme-primary-color);
   color: var(--vcr-theme-menu-font-color);
-  padding: 16px;
-  height: 56px;
+  padding: var(--vcr-menu-padding);
+  height: var(--vcr-menu-height);
 }
 
 .vcr-header {
   top: 0;
-  box-shadow: 0 4px 6px rgba(0,0,0,0.2);
+  box-shadow: var(--vcr-menu-header-shadow);
   display: flex;
   justify-content: space-between;
   align-items: center;
@@ -710,9 +740,14 @@ $bgColor: var(--vcr-menu-slider-bg-color);
   line-height: 1;
 }
 
+.vcr-icon-button__icon {
+  width: var(--vcr-menu-icon-width);
+  height: var(--vcr-menu-icon-height);
+}
+
 .vcr-footer {
   bottom: 0;
-  box-shadow: 0 -4px 6px rgba(0,0,0,0.2);
+  box-shadow: var(--vcr-menu-footer-shadow);
   display: flex;
   justify-content: space-between;
   align-items: center;
@@ -720,7 +755,7 @@ $bgColor: var(--vcr-menu-slider-bg-color);
 
 .vcr-footer__slider {
   flex: 1;
-  margin: 0 24px 0 8px;
+  margin: 0 calc(var(--vcr-menu-padding) * 1.5) 0 calc(var(--vcr-menu-padding) / 2);
 }
 
 .vcr-overlay {
@@ -730,7 +765,7 @@ $bgColor: var(--vcr-menu-slider-bg-color);
   left: 0;
   right: 0;
   bottom: 0;
-  background: rgba(0,0,0,0.3);
+  background: var(--vcr-overlay-color);
 }
 
 .vc-swiper-container {
