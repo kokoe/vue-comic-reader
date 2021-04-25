@@ -101,9 +101,11 @@ export default Vue.extend({
       (this.$refs.vcr as any).toNext();
     },
     toPrev (): void {
+      // eslint-disable-next-line
       (this.$refs.vcr as any).toPrev();
     },
     toNext (): void {
+      // eslint-disable-next-line
       (this.$refs.vcr as any).toNext();
     }
   }
