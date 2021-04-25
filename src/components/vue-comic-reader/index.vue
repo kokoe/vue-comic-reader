@@ -8,11 +8,11 @@
       enter-active-class="animate__animated animate__slideInDown"
       leave-active-class="animate__animated animate__slideOutUp"
     >
-      <header v-if="isShowMenu" class="vcr__header">
+      <header v-if="isShowMenu" class="vcr-header">
         <slot name="header" v-bind="menuSlotScope">
-          <slot name="header-brand"><div class="vcr__header-brand">{{ title }}</div></slot>
-          <button type="button" class="vcr__icon-button" @click="hideMenu">
-            <icon title="close" icon-name="close" class="vcr__icon-button-close" />
+          <slot name="header-brand"><div class="vcr-header__brand">{{ title }}</div></slot>
+          <button type="button" class="vcr-icon-button" @click="hideMenu">
+            <icon title="close" icon-name="close" class="vcr-icon-button__icon-close" />
           </button>
         </slot>
       </header>
@@ -23,20 +23,20 @@
       v-else
       ref="swiperContainer"
       :dir="horizontalDirection"
-      class="swiper-container vcr__swiper-container"
+      class="swiper-container vc-swiper-container"
     >
       <div class="swiper-wrapper">
         <div
           v-for="(page, i) in formattedPages"
           :key="i"
-          class="swiper-slide vcr__swiper-slide"
+          class="swiper-slide vcr-swiper-slide"
           :class="slideClass"
           data-show-menu="true"
         >
           <div
             v-for="(pageContent, j) in page"
             :key="pageContent.key"
-            class="vcr__swiper-slide-inner"
+            class="vcr-swiper-slide__inner"
             :class="getSlideInnerClass(j, page.length)"
           >
             <!-- TODO: Can't pass slot-slope -->
@@ -53,7 +53,7 @@
                 role="img"
                 :style="!useLazy ? `background-image: url(${pageContent.src})`: false"
                 :data-background="useLazy ? pageContent.src : false"
-                class="vcr__swiper-slide-image"
+                class="vcr-swiper-slide__image"
                 :class="useLazy ? 'swiper-lazy' : false"
                 data-show-menu="true"
               >
@@ -63,14 +63,14 @@
                 v-if="i !== 0"
                 @click.prevent="toPrev"
                 href="#"
-                class="vcr__swiper-slide-nav is-prev"
+                class="vcr-swiper-slide__nav is-prev"
                 aria-label="Previous"
               >{{ prevPageMessage }}</a>
               <a
                 v-if="i < (formattedPages.length - 1)"
                 @click.prevent="toNext"
                 href="#"
-                class="vcr__swiper-slide-nav is-next"
+                class="vcr-swiper-slide__nav is-next"
                 aria-label="Next"
               >{{ nextPageMessage }}</a>
             </slot>
@@ -85,18 +85,18 @@
       enter-active-class="animate__animated animate__fadeIn"
       leave-active-class="animate__animated animate__fadeOut"
     >
-      <div v-if="isShowMenu" class="vcr__overlay" @click="hideMenu"></div>
+      <div v-if="isShowMenu" class="vcr-overlay" @click="hideMenu"></div>
     </transition>
 
     <transition
       enter-active-class="animate__animated animate__slideInUp"
       leave-active-class="animate__animated animate__slideOutDown"
     >
-      <footer v-if="isShowMenu" class="vcr__footer">
+      <footer v-if="isShowMenu" class="vcr-footer">
         <slot name="footer" v-bind="menuSlotScope">
-          <VueSlider class="vcr__footer-slider" :value="activePage" :max="totalPage" :min="1" :direction="reverseHorizontal ? 'ltr' : 'rtl'" @change="onChangeSlider" />
-          <button type="button" class="vcr__icon-button" @click="changeDirection">
-            <icon title="change direction" :icon-name="iconDirection" class="vcr__icon-button-direction" />
+          <VueSlider class="vcr-footer__slider" :value="activePage" :max="totalPage" :min="1" :direction="reverseHorizontal ? 'ltr' : 'rtl'" @change="onChangeSlider" />
+          <button type="button" class="vcr-icon-button" @click="changeDirection">
+            <icon title="change direction" :icon-name="iconDirection" class="vcr-icon-button__icon-direction" />
           </button>
         </slot>
       </footer>
@@ -106,8 +106,8 @@
       enter-active-class="animate__animated animate__fadeIn"
       leave-active-class="animate__animated animate__fadeOut"
     >
-      <div v-if="noticeDirection.isShow" class="vcr__changed-direction">
-        <icon title="changed direction" :icon-name="iconDirection" class="vcr__changed-direction-icon" />
+      <div v-if="noticeDirection.isShow" class="vcr-changed-direction">
+        <icon title="changed direction" :icon-name="iconDirection" class="vcr-changed-direction__icon" />
       </div>
     </transition>
   </div>
@@ -672,8 +672,8 @@ $bgColor: var(--vcr-menu-slider-bg-color);
   -webkit-tap-highlight-color: transparent;
 }
 
-.vcr__header,
-.vcr__footer {
+.vcr-header,
+.vcr-footer {
   position: absolute;
   z-index: 12;
   left: 0;
@@ -684,7 +684,7 @@ $bgColor: var(--vcr-menu-slider-bg-color);
   height: 56px;
 }
 
-.vcr__header {
+.vcr-header {
   top: 0;
   box-shadow: 0 4px 6px rgba(0,0,0,0.2);
   display: flex;
@@ -692,14 +692,14 @@ $bgColor: var(--vcr-menu-slider-bg-color);
   align-items: center;
 }
 
-.vcr__header-brand {
+.vcr-header__brand {
   min-width: 0;
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
 }
 
-.vcr__icon-button {
+.vcr-icon-button {
   cursor: pointer;
   color: inherit;
   background: transparent;
@@ -710,7 +710,7 @@ $bgColor: var(--vcr-menu-slider-bg-color);
   line-height: 1;
 }
 
-.vcr__footer {
+.vcr-footer {
   bottom: 0;
   box-shadow: 0 -4px 6px rgba(0,0,0,0.2);
   display: flex;
@@ -718,12 +718,12 @@ $bgColor: var(--vcr-menu-slider-bg-color);
   align-items: center;
 }
 
-.vcr__footer-slider {
+.vcr-footer__slider {
   flex: 1;
   margin: 0 24px 0 8px;
 }
 
-.vcr__overlay {
+.vcr-overlay {
   position: absolute;
   z-index: 5;
   top: 0;
@@ -733,12 +733,12 @@ $bgColor: var(--vcr-menu-slider-bg-color);
   background: rgba(0,0,0,0.3);
 }
 
-.vcr__swiper-container {
+.vc-swiper-container {
   width: 100%;
   height: 100%;
 }
 
-.vcr__swiper-slide {
+.vcr-swiper-slide {
   overflow: hidden;
   display: flex;
   justify-content: center;
@@ -748,7 +748,7 @@ $bgColor: var(--vcr-menu-slider-bg-color);
   }
 }
 
-.vcr__swiper-slide-inner {
+.vcr-swiper-slide__inner {
   direction: ltr;
   position: relative;
   line-height: 1;
@@ -757,7 +757,7 @@ $bgColor: var(--vcr-menu-slider-bg-color);
   flex: 0 1 auto;
 }
 
-.vcr__swiper-slide-image {
+.vcr-swiper-slide__image {
   position: absolute;
   top: 0;
   right: 0;
@@ -780,7 +780,7 @@ $bgColor: var(--vcr-menu-slider-bg-color);
   }
 }
 
-.vcr__swiper-slide-nav {
+.vcr-swiper-slide__nav {
   display: block;
   position: absolute;
   z-index: 3;
@@ -866,7 +866,7 @@ $bgColor: var(--vcr-menu-slider-bg-color);
   }
 }
 
-.vcr__changed-direction {
+.vcr-changed-direction {
   pointer-events: none;
   position: absolute;
   z-index: 10;
@@ -879,7 +879,7 @@ $bgColor: var(--vcr-menu-slider-bg-color);
   color: #fff;
 }
 
-.vcr__changed-direction-icon {
+.vcr-changed-direction__icon {
   width: auto;
   height: calc(100% - 16px);
   margin: 8px;
