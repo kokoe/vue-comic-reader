@@ -18,9 +18,8 @@
       </header>
     </transition>
 
-    <div v-if="domRefresh_"></div>
     <div
-      v-else
+      v-if="!domRefresh_"
       ref="swiperContainer"
       :dir="horizontalDirection"
       class="swiper-container vc-swiper-container"
@@ -657,6 +656,7 @@ $bgColor: var(--vcr-menu-slider-bg-color);
 
 <style lang="scss" scoped>
 @import '~swiper/swiper-bundle.css';
+@import '@/assets/sass/reset';
 @import '@/assets/sass/animate';
 
 .swiper-button-prev.swiper-button-disabled,
@@ -693,6 +693,7 @@ $bgColor: var(--vcr-menu-slider-bg-color);
 
 .vcr-header,
 .vcr-footer {
+  box-sizing: border-box;
   position: absolute;
   z-index: 12;
   left: 0;
@@ -712,6 +713,7 @@ $bgColor: var(--vcr-menu-slider-bg-color);
 }
 
 .vcr-header__brand {
+  box-sizing: border-box;
   min-width: 0;
   overflow: hidden;
   text-overflow: ellipsis;
@@ -719,6 +721,7 @@ $bgColor: var(--vcr-menu-slider-bg-color);
 }
 
 .vcr-icon-button {
+  box-sizing: border-box;
   cursor: pointer;
   color: inherit;
   background: transparent;
@@ -730,6 +733,7 @@ $bgColor: var(--vcr-menu-slider-bg-color);
 }
 
 .vcr-icon-button__icon {
+  box-sizing: border-box;
   width: var(--vcr-menu-icon-width);
   height: var(--vcr-menu-icon-height);
 }
@@ -773,6 +777,7 @@ $bgColor: var(--vcr-menu-slider-bg-color);
 }
 
 .vcr-swiper-slide__inner {
+  box-sizing: border-box;
   direction: ltr;
   position: relative;
   line-height: 1;
@@ -891,6 +896,7 @@ $bgColor: var(--vcr-menu-slider-bg-color);
 }
 
 .vcr-changed-direction {
+  box-sizing: border-box;
   pointer-events: none;
   position: absolute;
   z-index: 10;
@@ -904,6 +910,7 @@ $bgColor: var(--vcr-menu-slider-bg-color);
 }
 
 .vcr-changed-direction__icon {
+  box-sizing: border-box;
   width: auto;
   height: calc(100% - 16px);
   margin: 8px;
