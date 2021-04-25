@@ -39,9 +39,9 @@
             class="vcr-swiper-slide__inner"
             :class="getSlideInnerClass(j, page.length)"
           >
-            <!-- TODO: Can't pass slot-slope -->
+            <!-- TODO: first-page and last-page can't pass slot-slope -->
             <slot
-              :name="getPageContentSlotName(pageContent.slot)"
+              :name="pageContent.slot"
               v-bind="createPageSlotScope({
                 slideIndex: i,
                 pageContent,
@@ -76,6 +76,7 @@
             </slot>
           </div>
         </div>
+
       </div>
       <div v-if="navigation" ref="swiperPrev" class="swiper-button-prev" :class="slideClass"></div>
       <div v-if="navigation" ref="swiperNext" class="swiper-button-next" :class="slideClass"></div>
@@ -285,9 +286,9 @@ export default Vue.extend({
 
   mounted () {
     this.$nextTick(function () {
-      this.initSwiper();
       this.hasFirstSlot = !!this.$slots['first-page'];
       this.hasLastSlot = !!this.$slots['last-page'];
+      setTimeout(() => this.initSwiper(), 0);
     });
   },
 
@@ -545,16 +546,6 @@ export default Vue.extend({
         src: null,
         slot
       };
-    },
-
-    getPageContentSlotName (slot: string): 'first-page' | 'last-page' | 'page' {
-      if (this.hasFirstSlot && (slot === 'first-page')) {
-        return 'first-page';
-      } else if (this.hasLastSlot && (slot === 'last-page')) {
-        return 'last-page';
-      } else {
-        return 'page';
-      }
     },
 
     initSwiper (): void {
