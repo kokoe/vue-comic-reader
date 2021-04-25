@@ -95,6 +95,7 @@ typings/
 
 .DS_Store
 /dist
+/docs
 
 /tests/e2e/videos/
 /tests/e2e/screenshots/
