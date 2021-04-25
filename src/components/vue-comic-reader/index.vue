@@ -172,6 +172,8 @@ type DataType = {
   },
   domRefresh_: boolean;
   initializedActiveSlideIndex_: boolean;
+  hasFirstSlot: boolean;
+  hasLastSlot: boolean;
 }
 
 export default Vue.extend({
@@ -252,7 +254,9 @@ export default Vue.extend({
         timerId_: -1
       },
       domRefresh_: false,
-      initializedActiveSlideIndex_: false
+      initializedActiveSlideIndex_: false,
+      hasFirstSlot: false,
+      hasLastSlot: false
     };
   },
 
@@ -282,6 +286,8 @@ export default Vue.extend({
   mounted () {
     this.$nextTick(function () {
       this.initSwiper();
+      this.hasFirstSlot = !!this.$slots['first-page'];
+      this.hasLastSlot = !!this.$slots['last-page'];
     });
   },
 
@@ -370,14 +376,6 @@ export default Vue.extend({
       }
 
       return pages;
-    },
-
-    hasFirstSlot (): boolean {
-      return !!this.$slots['first-page'];
-    },
-
-    hasLastSlot (): boolean {
-      return !!this.$slots['last-page'];
     },
 
     isHorizontal (): boolean {
