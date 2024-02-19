@@ -1,69 +1,30 @@
 {
   "name": "vue-comic-reader",
-  "version": "0.1.0",
-  "description": "Comic reader component for vue.js",
-  "author": "kokoe <kokoe@lettuce.sakura.ne.jp>",
+  "version": "2.0.0-alpha",
+  "private": true,
+  "repository": "https://github.com/kokoe/vue-comic-reader.git",
+  "description": "Comic reader component for Vue3",
+  "type": "module",
+  "engines": {
+    "node": ">=20.9.0",
+    "pnpm": "8.15.3",
+    "npm": "please_use_pnpm_instead"
+  },
+  "packageManager": "pnpm@8.15.3",
   "scripts": {
-    "serve": "vue-cli-service serve",
-    "build": "vue-cli-service build --target lib src/components/vue-comic-reader/index.vue",
-    "build:docs": "vue-cli-service build --dest docs/",
-    "test:unit": "vue-cli-service test:unit",
-    "test:e2e": "vue-cli-service test:e2e",
-    "lint": "vue-cli-service lint"
+    "dev": "pnpm --filter vue-comic-reader dev",
+    "type-check": "pnpm --filter vue-comic-reader type-check",
+    "prepare": "husky"
   },
-  "main": "./dist/vue-comic-reader.umd.min.js",
-  "dependencies": {
-    "bulma": "^0.9.2",
-    "core-js": "^3.6.5",
-    "husky": "^6.0.0",
-    "swiper": "^6.5.7",
-    "vue": "^2.6.11",
-    "vue-slider-component": "^3.2.11"
-  },
-  "devDependencies": {
-    "@types/jest": "^24.0.19",
-    "@typescript-eslint/eslint-plugin": "^4.18.0",
-    "@typescript-eslint/parser": "^4.18.0",
-    "@vue/cli-plugin-babel": "~4.5.0",
-    "@vue/cli-plugin-e2e-cypress": "~4.5.0",
-    "@vue/cli-plugin-eslint": "~4.5.0",
-    "@vue/cli-plugin-typescript": "~4.5.0",
-    "@vue/cli-plugin-unit-jest": "~4.5.0",
-    "@vue/cli-service": "~4.5.0",
-    "@vue/eslint-config-standard": "^5.1.2",
-    "@vue/eslint-config-typescript": "^7.0.0",
-    "@vue/test-utils": "^1.0.3",
-    "eslint": "^6.7.2",
-    "eslint-plugin-import": "^2.20.2",
-    "eslint-plugin-node": "^11.1.0",
-    "eslint-plugin-promise": "^4.2.1",
-    "eslint-plugin-standard": "^4.0.0",
-    "eslint-plugin-vue": "^6.2.2",
-    "lint-staged": "^10.5.4",
-    "sass": "^1.26.5",
-    "sass-loader": "^8.0.2",
-    "typescript": "~4.1.5",
-    "vue-template-compiler": "^2.6.11"
-  },
-  "bugs": {
-    "url": "https://github.com/kokoe/vue-comic-reader/issues"
-  },
-  "gitHooks": {
-    "pre-commit": "lint-staged"
-  },
-  "lint-staged": {
-    "*.{js,jsx,vue,ts,tsx}": "vue-cli-service lint"
-  },
-  "homepage": "https://github.com/kokoe/vue-comic-reader/",
-  "keywords": [
-    "vue",
-    "vue-comic-reader",
-    "vue-component"
-  ],
+  "keywords": [],
+  "author": "kokoe",
   "license": "MIT",
-  "repository": {
-    "type": "git",
-    "url": "git+https://github.com/kokoe/vue-comic-reader.git"
-  },
-  "typings": "./src/index.d.ts"
+  "dependencies": {
+    "@typescript-eslint/eslint-plugin": "^7.0.1",
+    "@typescript-eslint/parser": "^7.0.1",
+    "eslint": "^8.56.0",
+    "eslint-plugin-vue": "^9.21.1",
+    "husky": "9.0.11",
+    "lint-staged": "15.2.2"
+  }
 }
