@@ -1,0 +1,2 @@
+# https://commitlint.js.org/#/guides-local-setup
+npx --no -- commitlint --edit $1
