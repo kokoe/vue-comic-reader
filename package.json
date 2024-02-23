@@ -26,5 +26,10 @@
     "eslint-plugin-vue": "^9.21.1",
     "husky": "9.0.11",
     "lint-staged": "15.2.2"
+  },
+  "devDependencies": {
+    "@commitlint/cli": "^18.6.1",
+    "@commitlint/config-conventional": "^18.6.2",
+    "pnpm": "8.15.3"
   }
 }
