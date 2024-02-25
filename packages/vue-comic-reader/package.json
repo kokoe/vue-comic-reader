@@ -1,7 +1,6 @@
 {
   "name": "vue-comic-reader",
-  "version": "0.0.0",
-  "private": true,
+  "version": "2.0.0-alpha.1",
   "type": "module",
   "scripts": {
     "dev": "vite",
